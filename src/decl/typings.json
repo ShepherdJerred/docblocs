@@ -1,0 +1,13 @@
+{
+  "globalDependencies": {
+    "express": "registry:dt/express#4.0.0+20160708185218",
+    "express-serve-static-core": "registry:dt/express-serve-static-core#4.0.0+20160819131900",
+    "mime": "registry:dt/mime#0.0.0+20160316155526",
+    "mocha": "registry:dt/mocha#2.2.5+20160720003353",
+    "node": "registry:dt/node#6.0.0+20160823142437",
+    "serve-static": "registry:dt/serve-static#0.0.0+20160606155157",
+    "should": "registry:dt/should#8.1.1+20160608082854",
+    "superagent": "registry:dt/superagent#2.0.0+20160811085415",
+    "supertest": "registry:dt/supertest#1.1.0+20160724070541"
+  }
+}
