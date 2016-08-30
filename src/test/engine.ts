@@ -7,7 +7,7 @@ describe('engine function', () => {
   it('should render a simple template', (done) => {
     let app = express();
     app.engine('blx', engine);
-    app.set('views', 'src/test/fixtures');
+    app.set('views', './fixtures');
     app.use((req, res) => {
       res.render('one.blx');
     });
@@ -21,7 +21,7 @@ describe('engine function', () => {
   it('should render a template with variables', (done) => {
     let app = express();
     app.engine('blx', engine);
-    app.set('views', 'src/test/fixtures');
+    app.set('views', './fixtures');
     app.use((req, res) => {
       res.render('two.blx', {user: 'Fred', adj: 'happy'});
     });

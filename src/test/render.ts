@@ -144,38 +144,44 @@ describe('rendering functions', () => {
 
   it('should render import blocks', () => {
     let text = '[[@hello]][[hello()]]';
-    let final = render(text, {settings: {views: './src/test/fixtures'}});
+    let final = render(text, {settings: {views: './fixtures'}});
     return (<any>should(final)).eventually.equal('Hello, world!');
   })
 
   it('should let import blocks render their contents', () => {
     let text = '[[@helloContents]][[+helloContents()]]Howdy, world![[-helloContents]]';
-    let final = render(text, {settings: {views: './src/test/fixtures'}});
+    let final = render(text, {settings: {views: './fixtures'}});
     return (<any>should(final)).eventually.equal('<big>Howdy, world!</big>');
   })
 
   it('should let import blocks take parameters', () => {
     let text = '[[@helloBlock]][[helloBlock("Suzy")]]';
-    let final = render(text, {settings: {views: './src/test/fixtures'}});
+    let final = render(text, {settings: {views: './fixtures'}});
     return (<any>should(final)).eventually.equal('Hello, Suzy!');
   })
 
   it('should translate dots in import blocks to subdirectories', () => {
     let text = '[[@obscure.goodbye]][[goodbye()]]';
-    let final = render(text, {settings: {views: './src/test/fixtures'}});
+    let final = render(text, {settings: {views: './fixtures'}});
     return (<any>should(final)).eventually.equal('Goodbye, world!');
   })
 
   it('should allow import block to automatically invoke', () => {
     let text = '[[@helloBlock("Nancy")]] [[helloBlock]]';
-    let final = render(text, {settings: {views: './src/test/fixtures'}});
+    let final = render(text, {settings: {views: './fixtures'}});
     return (<any>should(final)).eventually.equal('Hello, Nancy! undefined');
   })
 
   it('should allow access to locals of invoked imports', () => {
     let text = '[[@helloBlock]][[hb = helloBlock("George")]][[hb.someLocal()]]';
-    let final = render(text, {settings: {views: './src/test/fixtures'}});
+    let final = render(text, {settings: {views: './fixtures'}});
     return (<any>should(final)).eventually.equal('This is local George');
+  })
+
+  it('should allow access to static members without invocation', () => {
+    let text = '[[@helloBlock]][[helloBlock.someStatic()]]';
+    let final = render(text, {settings: {views: './fixtures'}});
+    return (<any>should(final)).eventually.equal('This is static undefined');
   })
 
   it('should access local templates with dot notation', () => {
