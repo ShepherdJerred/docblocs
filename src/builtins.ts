@@ -1,15 +1,16 @@
+import { Dictionary } from './util';
 import { Context } from './base';
-import { Block, Template } from './ast';
+import { Block, Template, TemplateClosure } from './ast';
 import { parse } from './parse';
 import fs = require('fs');
 
-export var builtins = {
+export var builtins: Dictionary<Function> = {
   with: function withBlock(...args: any[]) {
     let contents = args.pop();
     return contents.invoke(...args);
   },
 
-  if: function ifBlock(condition, contents) {
+  if: function ifBlock(condition: any, contents: TemplateClosure) {
     let body = contents.invoke();
     if (condition) {
       return body.get('then') ?  body.get('then').invoke() : body;
@@ -19,31 +20,7 @@ export var builtins = {
     }
   },
 
-  // TODO: Make asynchronous
-  case: function caseBlock(contents) {
-    let open = true;
-    this.when = function when(condition, contents) {
-      if (open && condition) {
-        open = false;
-        return contents.invoke();
-      }
-      else {
-        return '';
-      }
-    }
-    this.otherwise = function(contents) {
-      if (open) {
-        open = false;
-        return contents.invoke();
-      }
-      else {
-        return '';
-      }
-    }
-    return contents.invoke();
-  },
-
-  forEach: function forEachBlock(items, contents) {
+  forEach: function forEachBlock(items: any[], contents: TemplateClosure) {
     let bodies: any[] = [];
     if (Array.isArray(items)) {
         for (let i = 0, l = items.length; i < l; ++i) {

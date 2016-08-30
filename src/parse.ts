@@ -17,7 +17,7 @@ var pat = {
   dottedIdentifier: /[\w$]+(\.[\w$]+)*/y,
   string: /"((?:[^"\\]|\\.)*)"/y,
   ws: /\s+/y,
-  binop: /[.*\/%+\-|]|<=?|>=?|[!=]=|&&|\|\|/y,
+  binop: /[*\/%+\-|]|<=?|>=?|[!=]=|&&|\|\|/y,
   unop: /[\-!]/y
 }
 
@@ -65,7 +65,7 @@ class BlockStack {
 
 /*========================================================*/
 
-export function parse(text, source = '<template source>'): Template {
+export function parse(text: string, source = '<template source>'): Template {
   let pos = 0;
   let loc = {source: source, line: 1, column: 1};
   let endPos = text.length;
@@ -351,8 +351,8 @@ export function parse(text, source = '<template source>'): Template {
    function parseImport(): Maybe<ImportNode> {
      let at = parseSymbol('@');
      if (at) {
-       let id, expr: Node;
-       id = parseDottedIdentifier();
+       let expr: Node;
+       let id = parseDottedIdentifier();
        if (id) {
          return new ImportNode(id, expr, at);
        }

@@ -2,8 +2,9 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es6",
-        "noImplicitAny": false,
-        "outDir": "lib",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "outDir": "target/lib",
         "rootDir": "src",
         "sourceMap": true,
         "experimentalDecorators": true

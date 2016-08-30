@@ -25,7 +25,7 @@ export abstract class Node {
 
   abstract equals(node: Node): boolean;
 
-  abstract eval(context): any;
+  abstract eval(context: Context): any;
 }
 
 /*========================================================*/
@@ -280,7 +280,7 @@ export abstract class OperationNode extends Node {
 
   abstract equals(node: Node): boolean;
 
-  abstract eval(context: Context);
+  abstract eval(context: Context): any;
 }
 
 /*--------------------------------------------------------*/
@@ -294,7 +294,7 @@ export class BinaryOperationNode extends OperationNode {
     return this.left.toString() + this.op + this.right.toString();
   }
 
-  equals(node: Node) {
+  equals(node: Node): boolean {
     return (node instanceof BinaryOperationNode) &&
       node.op === this.op &&
       node.left.equals(this.left) &&
@@ -307,7 +307,6 @@ export class BinaryOperationNode extends OperationNode {
   }
 
   static precedences = {
-    "." : 100,
     "*" : 80,
     "/" : 80,
     "%" : 80,
@@ -325,21 +324,20 @@ export class BinaryOperationNode extends OperationNode {
   }
 
   static operations = {
-    "." : (a, b, c) => a.eval(c)[b.value],
-    "*" : (a, b, c) => a.eval(c) *  b.eval(c),
-    "/" : (a, b, c) => a.eval(c) /  b.eval(c),
-    "%" : (a, b, c) => a.eval(c) %  b.eval(c),
-    "+" : (a, b, c) => a.eval(c) +  b.eval(c),
-    "-" : (a, b, c) => a.eval(c) -  b.eval(c),
-    "<" : (a, b, c) => a.eval(c) <  b.eval(c),
-    "<=": (a, b, c) => a.eval(c) <= b.eval(c),
-    ">" : (a, b, c) => a.eval(c) >  b.eval(c),
-    ">=": (a, b, c) => a.eval(c) >= b.eval(c),
-    "==": (a, b, c) => a.eval(c) == b.eval(c),
-    "!=": (a, b, c) => a.eval(c) != b.eval(c),
-    "&&": (a, b, c) => a.eval(c) && b.eval(c),
-    "||": (a, b, c) => a.eval(c) || b.eval(c),
-    "|" : (a, b, c) => b.eval(c)(a.eval(c))
+    "*" : (a: Node, b: Node, c: Context) => a.eval(c) *  b.eval(c),
+    "/" : (a: Node, b: Node, c: Context) => a.eval(c) /  b.eval(c),
+    "%" : (a: Node, b: Node, c: Context) => a.eval(c) %  b.eval(c),
+    "+" : (a: Node, b: Node, c: Context) => a.eval(c) +  b.eval(c),
+    "-" : (a: Node, b: Node, c: Context) => a.eval(c) -  b.eval(c),
+    "<" : (a: Node, b: Node, c: Context) => a.eval(c) <  b.eval(c),
+    "<=": (a: Node, b: Node, c: Context) => a.eval(c) <= b.eval(c),
+    ">" : (a: Node, b: Node, c: Context) => a.eval(c) >  b.eval(c),
+    ">=": (a: Node, b: Node, c: Context) => a.eval(c) >= b.eval(c),
+    "==": (a: Node, b: Node, c: Context) => a.eval(c) == b.eval(c),
+    "!=": (a: Node, b: Node, c: Context) => a.eval(c) != b.eval(c),
+    "&&": (a: Node, b: Node, c: Context) => a.eval(c) && b.eval(c),
+    "||": (a: Node, b: Node, c: Context) => a.eval(c) || b.eval(c),
+    "|" : (a: Node, b: Node, c: Context) => b.eval(c)(a.eval(c))
   }
 }
 
@@ -356,14 +354,14 @@ export class UnaryOperationNode extends OperationNode {
     return eventuallyCallFn(UnaryOperationNode.operations[this.op], this.right, context);
   }
 
-  equals(node: Node) {
+  equals(node: Node): boolean {
     return (node instanceof UnaryOperationNode) &&
       node.op === this.op &&
       node.right.equals(this.right);
   }
 
   static operations = {
-    "-": (a, c) => -a.eval(c),
-    "!": (a, c) => !a.eval(c)
+    "-": (a: Node, c: Context) => -a.eval(c),
+    "!": (a: Node, c: Context) => !a.eval(c)
   }
 }

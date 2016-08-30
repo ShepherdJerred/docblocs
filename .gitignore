@@ -1,2 +1,2 @@
-/node_modules
-/lib
+/target/node_modules
+/target/lib

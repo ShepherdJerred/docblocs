@@ -7,7 +7,7 @@ export function evaluate(value: any): Eventually<string|Tree<string>> {
   if (Array.isArray(value)) {
     let tree = value.map(evaluate);
     let promises: PromiseLike<any>[] = [];
-    let resolve = (j) => (result) => {
+    let resolve = (j: number) => (result: any): any => {
       let e = evaluate(result);
       if (isPromise(e)) {
         e = e.then(resolve(j));

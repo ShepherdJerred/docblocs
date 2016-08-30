@@ -1,6 +1,6 @@
 import { render } from "../render";
 import { parse } from "../parse";
-import { Template } from "../ast";
+import { Template, TemplateClosure } from "../ast";
 import should = require('should');
 import request = require('supertest');
 
@@ -47,7 +47,7 @@ describe('rendering functions', () => {
 
   it('should render multiple blocks', () => {
     let text = 'abc [[def]] ghi [[klm(nop, 26, "qrs")]] tuv';
-    let final = render(text, {def: "pop", nop: "bob", klm: (a, b, c) => c + (b + 11) + a});
+    let final = render(text, {def: "pop", nop: "bob", klm: (a: number, b: number, c: number) => c + (b + 11) + a});
     should(final).be.a.String().equal('abc pop ghi qrs37bob tuv');
   })
 
@@ -134,7 +134,7 @@ describe('rendering functions', () => {
     let text = '[[fum]] [[+fee()]][[fum]][[-fee]] [[fum]]';
     let final = render(text, {
       fum: 'foo',
-      fee: function (contents) {
+      fee: function (contents: TemplateClosure) {
         this.fum = 'bar';
         return contents.invoke();
       }
@@ -240,7 +240,7 @@ describe('rendering functions', () => {
 
   it('should render nested applications', () => {
     let text = '[[foo(bar(5, 4), bar(foo(3, 2), 1))]]';
-    let final = render(text, {foo: (a, b) => a + b, bar: (a, b) => a - b});
+    let final = render(text, {foo: (a: number, b: number) => a + b, bar: (a: number, b: number) => a - b});
     should(final).be.a.String().equal('5')
   })
 

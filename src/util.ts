@@ -68,19 +68,6 @@ export function pop<T>(ts: Stack<T>): T {
 
 export type Eventually<T> = T|Promise<T>;
 
-function f() {
-
-  var x: Eventually<number>;
-
-  if (typeof x === 'number') {
-    var y = x + 3;
-  }
-
-  if (isPromise(x)) {
-    var z = x.then((a) => a + 3);
-  }
-}
-
 /*--------------------------------------------------------*/
 
 export function isPromise(x: any): x is PromiseLike<any> {
@@ -151,7 +138,7 @@ export function eventuallyGet(v: Eventually<Object>, p: string): Eventually<any>
 export function resolvePromises(value: any): Eventually<any> {
   var promises: PromiseLike<any>[] = [];
 
-  let resolve = (key) => (val) => {
+  let resolve = (key: string|number) => (val: Object) => {
     return value[key] = resolvePromises(val);
   };
 

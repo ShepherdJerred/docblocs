@@ -11,10 +11,6 @@ export class Template {
   members: Definition[];
   context: Context;
 
-  toString(): string {
-    return '[object Template]';
-  }
-
   constructor(params?: string[]) {
     this.children = [];
     if (params) {
@@ -22,6 +18,10 @@ export class Template {
     }
 
     let thisTemplate = this;
+  }
+
+  toString(): string {
+    return '[object Template]';
   }
 
   push(block: Block|string) {
@@ -76,11 +76,11 @@ export class TemplateClosure {
     return '[object TemplateClosure]';
   }
 
-  get(name: string) {
+  get(name: string): any {
     return this.context[name];
   }
 
-  invoke(...args: any[]);
+  invoke(...args: any[]): TemplateResult;
   invoke() {
     return new TemplateResult(this, ...arguments);
   }
@@ -119,6 +119,10 @@ export class TemplateResult {
     }
   }
 
+  get(name: string): any {
+    return this.context[name];
+  }
+
   eval(): Tree<Eventually<any>> {
     return this.children.map((child) => {
       if (child instanceof Block) {
@@ -128,9 +132,5 @@ export class TemplateResult {
         return child;
       }
     })
-  }
-
-  get(name: string) {
-    return this.context[name];
   }
 }
