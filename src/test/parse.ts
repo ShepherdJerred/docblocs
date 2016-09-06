@@ -322,4 +322,17 @@ describe('parse function', () => {
       .with.property('value').equal("abc");
     should(d.static).be.ok();
   })
+
+  it('should allow closing tag to reference import', () => {
+    let text = '[[+@def]]Hello[[-@def]]';
+    let result = parse(text);
+    should(result).be.an.instanceof(Template);
+    result.should.have.property('children').which.is.Array().of.length(1);
+    result.children[0].should.be.instanceof(Block);
+    let b = <Block>result.children[0];
+    b.should.have.property('expr').which.is.an.instanceof(ImportNode);
+    let i = <ImportNode>b.expr;
+    i.should.have.property('id').which.is.an.instanceof(IdentifierNode)
+      .with.property('value').equal('def');
+  })
 })

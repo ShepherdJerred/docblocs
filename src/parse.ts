@@ -632,12 +632,6 @@ export function parse(text: string, source = '<template source>'): Template {
           end
         )
       }
-      if (! (inner instanceof IdentifierNode)) {
-        throw new ParseError(
-          'Closing block should only contain identifier',
-          inner
-        )
-      }
     }
     else if (begin.fragdef) {
       if (! begin.open) {
@@ -770,7 +764,7 @@ export function parse(text: string, source = '<template source>'): Template {
         if (begin.fragdef) {
           inner = translateFragmentDefinition(inner);
         }
-        else {
+        else if (!begin.open) {
           inner = translateImport(inner, end);
         }
 
