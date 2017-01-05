@@ -70,7 +70,7 @@ export type Eventually<T> = T|Promise<T>;
 
 /*--------------------------------------------------------*/
 
-export function isPromise(x: any): x is PromiseLike<any> {
+export function isPromise(x: any): x is Promise<any> {
   return (typeof x) === 'object' && x !== null && (typeof x.then) === 'function';
 }
 

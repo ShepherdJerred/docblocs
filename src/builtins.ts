@@ -20,7 +20,7 @@ export var builtins: Dictionary<Function> = {
     }
   },
 
-  forEach: function forEachBlock(items: any[], contents: TemplateClosure) {
+  forEach: function forEachBlock(items: any, contents: TemplateClosure) {
     let bodies: any[] = [];
     if (Array.isArray(items)) {
         for (let i = 0, l = items.length; i < l; ++i) {

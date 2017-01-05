@@ -28,7 +28,7 @@ export function evaluate(value: any): Eventually<string|Tree<string>> {
       return Promise.all(promises).then(() => tree);
     }
     else {
-      return tree;
+      return <Tree<string>>tree;
     }
   }
   else if (isPromise(value)) {
