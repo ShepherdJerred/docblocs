@@ -1,6 +1,7 @@
 {
   "name": "docblocks",
   "version": "1.0.0",
+  "types": "docblocks.d.ts",
   "description": "Document templating library",
   "scripts": {
     "test": "NODE_ENV=test mocha --reporter spec lib/test",
