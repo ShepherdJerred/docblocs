@@ -1,7 +1,0 @@
-
-[[+= helloBlock -> name ]]Hello, [[name]]!
-
-[[~+= someLocal ]]This is local [[name]][[- someLocal ~]]
-[[+= someStatic s]]This is static [[name]][[- someStatic ~]]
-
-[[- helloBlock ]]
