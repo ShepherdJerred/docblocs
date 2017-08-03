@@ -68,7 +68,19 @@ rootPageScope.symbols = {
       });
     },
     ["file"]
-  )
+  ),
+
+  escape: function escape(s: string) {
+    return s.replace(/[<>"&]/g, c => {
+      switch(c) {
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        case '&': return '&amp;';
+      }
+      return '';
+    })
+  }
 
 }
 
