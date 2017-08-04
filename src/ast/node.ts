@@ -339,6 +339,8 @@ export class BinaryOperation extends Operation {
     "%" : 80,
     "+" : 70,
     "-" : 70,
+    "@" : 65,
+    "@@": 65,
     "<" : 60,
     "<=": 60,
     ">" : 60,
@@ -364,7 +366,9 @@ export class BinaryOperation extends Operation {
     "!=": (a, b) => a != b,
     "&&": (a, b) => a && b,
     "||": (a, b) => a || b,
-    "|" : (a, b) => b(a)
+    "|" : (a, b) => b(a),
+    "@@": (a, b) => Array.isArray(a) ? (a.push(b), a) : [b],
+    "@":  (a, b) => Array.isArray(a) ? a.concat([b]) : [b]
   }
 }
 
