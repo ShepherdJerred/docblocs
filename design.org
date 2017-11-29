@@ -300,10 +300,11 @@ function withpi_helper(context, bloc) {
      + The value ~3.14~ is stored in the bloc dictionary under ~pi~
      + The template ~How now, brown cow?~ is stored in the bloc dictionary
        under the name ~contents~
-     + The value ~"hello"~ is added to the context being passed to the helper
+     + The value "~hello~" is added to the context being passed to the helper
        under the name ~greeting~
      + If the context already had a value for ~greeting~, this value would be
-       overwritten, but restored after the helper has completed
+       hidden inside this bloc, but would become visible again after the
+       end of the bloc
    - We can add templates to the context using the ~[[+=name]]~ bloc
      #+BEGIN_EXAMPLE
 [[+foo]]
@@ -314,6 +315,7 @@ function withpi_helper(context, bloc) {
 #+END_EXAMPLE
    - Changes made to the context like this are visible in the helper and all
      of the templates it renders
+     + Dynamic scoping
      + Much like a function editing a global variable while it runs, then
        putting it back when it's done
      + It is desirable to be able to create local variables only visible by
@@ -335,16 +337,16 @@ template.render(arg1, arg2, context, bloc)
      #+BEGIN_EXAMPLE
 [[template(arg1, arg2)]]
 #+END_EXAMPLE
-   - Parameters are defined for the contained template and all templates
-     defined within.
+   - Parameters are defined for their template and all templates
+     nested within.
    - Variables are resolved following standard scope resolution rules
    - Example:
      #+BEGIN_EXAMPLE -n -r
 [[x]] (ref:x1)
-[[=fee -> x]]
+[[+fee -> x]]
   [[+fie(x)]] (ref:x2)
     [[x]] (ref:x3)
-    [[=foe -> x]]
+    [[+foe -> x]]
       [[x]] (ref:x4)
     [[-foe]]
   [[-fie]]
@@ -416,7 +418,7 @@ template.render(arg1, arg2, context, bloc)
      + A function that will add things to the array
    - Example:
      #+BEGIN_EXAMPLE
-[[scripts = require(scripts-manager").new()]]
+[[scripts = require("scripts-manager").new()]]
  <html>
    <head>
      [[scripts.tags]]

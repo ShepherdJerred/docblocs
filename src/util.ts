@@ -72,34 +72,42 @@ export interface Stack<T> extends Array<T> {
   top?: T;
 }
 
-/**
- * Add new element to top of stack.
- */
-export function push<T>(ts: Stack<T>, t: T) {
-  ts.push(t);
-  ts.top = t;
-  return ts;
-}
+export var Stack = {
 
-/**
- * Remove element from top of stack.
- * @returns the element removed
- */
-export function pop<T>(ts: Stack<T>): T {
-  let t = ts.pop();
-  if (! t) {
-    throw new Error("Precondition violation: pop() called on non-empty stack");
-  }
-  let l = ts.length;
-  if (l) {
-    ts.top = ts[l - 1];
-  }
-  else {
-    ts.top = undefined;
-  }
-  return t;
-}
+  /**
+   */
+   create<T>(...init: T[]): Stack<T> {
+     return init;
+   },
 
+  /**
+   * Add new element to top of stack.
+   */
+  push<T>(ts: Stack<T>, t: T) {
+    ts.push(t);
+    ts.top = t;
+    return ts;
+  },
+
+  /**
+   * Remove element from top of stack.
+   * @returns the element removed
+   */
+  pop<T>(ts: Stack<T>): T {
+    let t = ts.pop();
+    if (! t) {
+      throw new Error("Precondition violation: pop() called on non-empty stack");
+    }
+    let l = ts.length;
+    if (l) {
+      ts.top = ts[l - 1];
+    }
+    else {
+      ts.top = undefined;
+    }
+    return t;
+  },
+}
 /*========================================================*/
 
 /**

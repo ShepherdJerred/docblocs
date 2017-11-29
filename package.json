@@ -1,5 +1,5 @@
 {
-  "name": "docblocks",
+  "name": "@gfoust/docblocks",
   "version": "1.0.0",
   "types": "lib/docblocks.d.ts",
   "description": "Document templating library",

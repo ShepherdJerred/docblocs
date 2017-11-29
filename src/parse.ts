@@ -1,8 +1,8 @@
 import { ParseError       } from "./error";
 import { Maybe,
-         Dictionary       } from "../util";
-import * as util            from "../util";
-import * as ast             from '../ast';
+         Dictionary,
+         Stack            } from "./util";
+import * as ast             from './ast';
 import { TemplateInstance } from "./instance";
 
 /** Unique ID for root template (since it does not have a block). */
@@ -261,7 +261,7 @@ export function parseRaw(text: string, source = '<template source>'): ast.Templa
 
   /**
    */
-   function parseBlockParams(data: ast.BlockData) {
+   function parseBlockParams(data: ast.) {
      let token = parseToken("->");
      if (token) {
        let params = parseSequence(parseIdentifier, "parameter name");
@@ -276,24 +276,24 @@ export function parseRaw(text: string, source = '<template source>'): ast.Templa
   /**
    */
   function parseExpression(): Maybe<ast.Expression> {
-    let valStack: util.Stack<ast.Expression> = [];
-    let opStack: util.Stack<ast.BinaryOperation> = [];
+    let valStack: Stack<ast.Expression> = [];
+    let opStack: Stack<ast.BinaryOperation> = [];
 
     let primary = parsePrimary();
     if (primary) {
-      util.push(valStack, primary);
+      Stack.push(valStack, primary);
       let op = parseBinary();
       while (op) {
         primary = parsePrimary();
         if (primary) {
           while (opStack.top && opStack.top.precedence >= op.precedence) {
-            opStack.top.right = util.pop(valStack);
-            opStack.top.left = util.pop(valStack);
-            util.push(valStack, util.pop(opStack));
+            opStack.top.right = Stack.pop(valStack);
+            opStack.top.left = Stack.pop(valStack);
+            Stack.push(valStack, Stack.pop(opStack));
           }
 
-          util.push(opStack, op);
-          util.push(valStack, primary);
+          Stack.push(opStack, op);
+          Stack.push(valStack, primary);
         }
         else {
           throw new ParseError('Expected operand', curLoc);
@@ -303,12 +303,12 @@ export function parseRaw(text: string, source = '<template source>'): ast.Templa
       }
 
       while (opStack.top) {
-        opStack.top.right = util.pop(valStack);
-        opStack.top.left = util.pop(valStack);
-        util.push(valStack, util.pop(opStack));
+        opStack.top.right = Stack.pop(valStack);
+        opStack.top.left = Stack.pop(valStack);
+        Stack.push(valStack, Stack.pop(opStack));
       }
 
-      return util.pop(valStack);
+      return Stack.pop(valStack);
     }
   }
 
@@ -352,10 +352,10 @@ export function parseRaw(text: string, source = '<template source>'): ast.Templa
    *      | Extend Deref
    */
   function parsePrimary(): Maybe<ast.Expression> {
-    let opstack: util.Stack<ast.UnaryOperation> = [];
+    let opstack: Stack<ast.UnaryOperation> = [];
     let op = parseUnary();
     while (op) {
-      util.push(opstack, op);
+      Stack.push(opstack, op);
       op = parseUnary();
     }
 
@@ -375,7 +375,7 @@ export function parseRaw(text: string, source = '<template source>'): ast.Templa
     if (expr) {
       while (opstack.top) {
         opstack.top.right = expr;
-        expr = util.pop(opstack);
+        expr = Stack.pop(opstack);
       }
     }
 
@@ -715,4 +715,71 @@ export function parseRaw(text: string, source = '<template source>'): ast.Templa
     }
   }
 
+}
+
+
+export interface BlockData extends Location {
+  comment?:    boolean;
+  open?:       boolean;
+  close?:      boolean;
+  implicit?:   boolean;
+  assignThis?: Token;
+  expr?:       Expression;
+  assign?:     Token;
+  target?:     Expression;
+  params?:     TemplateParams;
+}
+
+export function makeBlock(data: BlockData): Block {
+  let contents: Maybe<Template>;
+  if (data.open) {
+    contents = new Template(data.params);
+  }
+  if (data.assign && data.assignThis) {
+    throw new ParseError("Multiple assignment operators", data.assign)
+  }
+  else if (data.assign) {
+    if (data.assign.value.endsWith(':')) {
+      if (data.target instanceof Identifier) {
+        return new Injection(data.target, data.assign, data.expr as Expression, contents, data);
+      }
+      else {
+        throw new ParseError("Not an identifier", data.target as Expression);
+      }
+    }
+    else {
+      if (data.target instanceof LValue) {
+        return new Assignment(data.target, data.assign, data.expr as Expression, contents, data);
+      }
+      else {
+        throw new ParseError("Not an lvalue", data.target || data);
+      }
+    }
+  }
+  else if (data.assignThis) {
+    if (data.assignThis.value.endsWith(':')) {
+      if (data.expr instanceof Identifier) {
+        let thisContents = new Identifier("thisContents", data.assignThis);
+        return new Injection(data.expr, data.assignThis, thisContents, contents, data);
+      }
+      else {
+        throw new ParseError("Not an identifier", data.expr as Expression);
+      }
+    }
+    else {
+      if (data.expr instanceof LValue) {
+        let thisContents = new Identifier("thisContents", data.assignThis);
+        return new Assignment(data.expr, data.assignThis, thisContents, contents, data);
+      }
+      else {
+        throw new ParseError("Not an lvalue", data.expr || data);
+      }
+    }
+  }
+  else if (data.expr) {
+    return new Block(data.expr, contents, data);
+  }
+  else {
+    throw new ParseError("Expression expected", data);
+  }
 }
