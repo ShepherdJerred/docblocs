@@ -1,46 +1,51 @@
-import { ParseError       } from "./error";
+import { ParseError  } from "../error";
 import { Maybe,
          Dictionary,
-         Stack            } from "./util";
-import * as ast             from './ast';
-import { TemplateInstance } from "./instance";
+         Stack       } from "../util";
+import * as ast        from '../ast';
 
 /** Unique ID for root template (since it does not have a block). */
 const rootId = '<root>';
+
+function canClose(open: ast.Expression, close: ast.Expression): boolean {
+  return (
+    open.equals(close) ||
+    open instanceof ast.Application && canClose(open.fn, close) ||
+    open instanceof ast.BinaryOperation && open.op == "|" && canClose(open.left, close)
+  );
+}
 
 /**
  * Maintains a parallel stack of nodes and templates representing nested
  * blocks.  The node is the identifying node which will be used to close
  * the block.  The template is the contents of the block.
  */
-class BlockStack {
+class BlocStack {
+
   /** Stack of blocks */
-  blocks: (ast.Block|null)[] = [];
+  blocs: ast.Bloc[] = [];
+
   /** Top of block stack */
-  block: ast.Block|null;
+  bloc: ast.Bloc;
+
   /** Stack of identifiers. */
-  ids: (ast.Node|null)[] = [];
+  ids: (ast.Expression|null)[] = [];
+
   /** Top of identifier stack. */
-  id: ast.Node;
-  /** Stack of templates. */
-  templates: ast.Template[] = [];
-  /** Top of template stack. */
-  template: ast.Template;
+  id: ast.Expression;
 
   /**
    * Add new id/template pair to stack.
    * @param id       Identifying node for the block
    * @param template Template for block contents
    */
-  push(block: ast.Block|null, id: ast.Node|null, template: ast.Template) {
-    this.blocks.push(block);
+  push(bloc: ast.Bloc, id: ast.Expression|null) {
+    this.blocs.push(bloc);
     this.ids.push(id);
-    this.templates.push(template);
-    this.block = block;
+    this.bloc = bloc;
     if (id !== null) {
       this.id = id;
     }
-    this.template = template;
   }
 
   /**
@@ -49,33 +54,28 @@ class BlockStack {
    * @returns  The template removed if id matches
    * @throws   ParseError if id does not match
    */
-  pop(id: ast.Node): ast.Template {
-    if (this.id.equals(id) ||
-        this.id instanceof ast.Application && this.id.fn.equals(id)) {
+  pop(id: ast.Expression) {
+    if (canClose(this.id, id)) {
       let i = this.ids.length - 1;
       while (this.ids[i] === null) {
         --i;
       }
 
-      let template = this.templates[i];
-      this.blocks.splice(i, this.blocks.length);
+      this.blocs.splice(i, this.blocs.length);
       this.ids.splice(i, this.ids.length);
-      this.templates.splice(i, this.templates.length);
 
       --i;
-      this.block = this.blocks[i];
-      this.template = this.templates[i];
+      this.bloc = this.blocs[i];
       while (this.ids[i] === null) {
         --i;
       }
       this.id = this.ids[i] as ast.Expression;
-      return template;
     }
     else if (this.id instanceof ast.Identifier && this.id.value === rootId) {
-      throw new ParseError(`Unexpected closing tag`, id);
+      throw new ParseError(`Unexpected closing tag`, id.location);
     }
     else {
-      throw new ParseError(`Expected [[-${this.id}]]`, id);
+      throw new ParseError(`Expected [[-${this.id}]]`, id.location);
     }
   }
 }

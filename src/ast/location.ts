@@ -7,3 +7,6 @@ export interface Location {
   column: number;
 }
 
+export function copyLoc(loc: Location) {
+  return { source: loc.source, line: loc.line, column: loc.column };
+}

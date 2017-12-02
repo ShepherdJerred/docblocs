@@ -1,30 +1,27 @@
 import { Dictionary } from "../util";
-import { Location   } from "./location";
+import { Location,
+         copyLoc    } from "./location";
 
 //==============================================================================
 
 /**
  * Simple class to hold tokens and their locations.
  */
-export class Token implements Location {
-  source: string;
-  line:   number;
-  column: number;
-  value:  string;
+export class Token {
+  value: string;
+  location: Location;
 
   constructor(value: string, location: Location) {
     this.value  = value;
-    this.source = location.source;
-    this.line   = location.line;
-    this.column = location.column;
+    this.location = copyLoc(location);
   }
 
   toString(): string {
     return this.value;
   }
 
-  equals(token: Token): boolean {
-    return this.value == token.value;
+  equals(node: any): boolean {
+    return (node instanceof Token) && this.value == node.value;
   }
 }
 
@@ -50,15 +47,11 @@ export interface ExpressionVisitor<T> {
 /**
  * Base class for all expression nodes in the AST.
  */
-export abstract class Expression implements Location {
-  source: string;
-  line:   number;
-  column: number;
+export abstract class Expression {
+  location: Location;
 
   constructor(location: Location) {
-    this.source = location.source;
-    this.line   = location.line;
-    this.column = location.column;
+    this.location = copyLoc(location);
   }
 
   abstract toString(): string;
@@ -73,13 +66,14 @@ export abstract class Expression implements Location {
  * Node for a undefined literal.
  */
 export class Undefined extends Expression {
+  value: undefined;
 
   constructor(loc: Location) {
     super(loc);
   }
 
   toString(): string {
-    return "null";
+    return "undefined";
   }
 
   equals(node: any): boolean {
@@ -91,11 +85,14 @@ export class Undefined extends Expression {
   }
 }
 
+Undefined.prototype.value = undefined;
+
 
 /**
  * Node for a null literal.
  */
 export class Null extends Expression {
+  value: null;
 
   constructor(loc: Location) {
     super(loc);
@@ -114,6 +111,7 @@ export class Null extends Expression {
   }
 }
 
+Null.prototype.value = null;
 
 /**
  * Node for a boolean literal.
@@ -337,7 +335,7 @@ export abstract class Operation extends Expression {
 /**
  * Implementation function for unary operator.
  */
-type UnaryOperationFunction = (a: any, c: any) => any;
+type UnaryOperationFunction = (a: any) => any;
 
 /**
  * Node for unary operation.
@@ -431,18 +429,18 @@ export class BinaryOperation extends Operation {
 
 
 /**
- * Node for an array literal.
+ * Node for an array construction.
  */
 export class ArrayConstruction extends Expression {
   value: Expression[];
 
   constructor(value: Expression[], loc: Location) {
     super(loc);
+    this.value = value;
   }
 
   toString(): string {
-    let contentsString = this.value.map(value => value.toString()).join(', ');
-    return `[${contentsString}]`;
+    return `[${this.value.join(', ')}]`;
   }
 
   equals(node: any): boolean {
@@ -485,7 +483,7 @@ export class ObjectConstruction extends Expression {
 
   toString(): string {
     let contentsString = Object.keys(this.value)
-      .map(key => JSON.stringify(key) + ": " + this.value[key].toString())
+      .map(key => JSON.stringify(key) + ": " + this.value[key])
       .join(', ');
     return `{${contentsString}}`;
   }
