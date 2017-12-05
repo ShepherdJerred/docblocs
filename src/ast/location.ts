@@ -2,11 +2,10 @@
  * A location in the source text.
  */
 export interface Location {
-  source: string;
   line: number;
-  column: number;
+  char: number;
 }
 
 export function copyLoc(loc: Location) {
-  return { source: loc.source, line: loc.line, column: loc.column };
+  return { line: loc.line, char: loc.char };
 }

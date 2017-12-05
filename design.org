@@ -187,7 +187,7 @@ function if_helper(test, context, bloc) {
   Hello
   [[+:else]]
     Goodbye
-  [[-:else]]
+  [[-else]]
 [[-if]]
 #+END_EXAMPLE
      + A new bloc dictionary will be created for the bloc
@@ -248,7 +248,7 @@ function if_helper(test, context, bloc) {
        the following:
        #+BEGIN_EXAMPLE
 [[+page]]
-  [[:news]]Bananas on sale!  50% off!!![[-news]]
+  [[+:news]]Bananas on sale!  50% off!!![[-news]]
   Our fruit store has every kind of fruit you can imagine.
 [[-page]]
 #+END_EXAMPLE
@@ -368,7 +368,7 @@ function let_helper(arg, context, bloc) {
 [[*let(this.copyrightTemplate) -> copyright]]
   [[+:copyrightTemplate]]
     <div class="copyright">&copy;2017 Gabriel Foust</div>
-  [[-:copyrightTemplate]]
+  [[-copyrightTemplate]]
 #+END_EXAMPLE
 
 7. Context definitions
@@ -416,14 +416,12 @@ function withpi_helper(context, bloc) {
 [[*let(this.copyrightTemplate) => copyright]]
   [[+:copyrightTemplate]]
     <div class="copyright">&copy;2017 Gabriel Foust</div>
-  [[-:copyrightTemplate]]
+  [[-copyrightTemplate]]
 #+END_EXAMPLE
 
 8. Root bloc
    - Every template file has a root bloc, though it may sometimes be implicit
-   - Bloc name should be the same as the template file name
-     + Template file ~fee.txt~
-     + Root bloc ~fee~
+   - Bloc name should be
    - There can be no contents outside the root bloc
    - If no such bloc is found, one is implicitly createdp
    - Provides a place to specify parameters for the template file

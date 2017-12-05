@@ -1,81 +1,87 @@
 import { Expression,
          Identifier  } from "./expr";
-import { Location,
-         copyLoc     } from "./location";
+import { Location    } from "./location";
 import { Maybe,
          Dictionary  } from "../util";
 
-export class Definition  {
+
+export interface Definition extends Location {
+  type: "Definition";
   target: Identifier;
+  expression: Maybe<Expression>;
+  contents?: Template;
+}
+
+export function Definition(
+  location: Location,
+  target: Identifier,
+  expression?: Expression
+): Definition {
+
+  return {
+    type: "Definition",
+    line: location.line,
+    char: location.char,
+    target,
+    expression
+  };
+}
+
+export interface Bloc extends Location {
+  type: "Bloc";
   expression: Expression;
-  contents: Maybe<Template>;
-  location: Location;
-
-  constructor(target: Identifier,
-              expression: Expression,
-              contents: Maybe<Template>,
-              location: Location        ) {
-    this.target = target;
-    this.expression = expression;
-    this.contents = contents;
-    this.location = copyLoc(location);
-  }
+  contents?: Template;
+  properties?: Definition[]
 }
 
-export class Bloc {
-  contextProps: Maybe<Definition[]>
-  blocProps: Maybe<Definition[]>
-  contents: Maybe<Template>;
-
-  addContextProperty(defn: Definition) {
-    if (this.contextProps) {
-      this.contextProps.push(defn);
-    }
-    else {
-      this.contextProps = [ defn ];
-    }
+export function Bloc(location: Location, expression: Expression, contents?: Template, properties?: Definition[]): Bloc {
+  let bloc: Bloc = {
+    type: "Bloc",
+    line: location.line,
+    char: location.char,
+    expression,
+  };
+  if (contents) {
+    bloc.contents = contents;
   }
-
-  addBlocProperty(defn: Definition) {
-    if (this.blocProps) {
-      this.blocProps.push(defn);
-    }
-    else {
-      this.blocProps = [ defn ];
-    }
+  if (properties) {
+    bloc.properties = properties;
   }
+  return bloc;
 }
 
-export class NestedBloc extends Bloc {
-  expression: Expression;
-  location: Location;
-
-  constructor(expression: Expression, contents: Maybe<Template>, location: Location) {
-    super();
-    this.expression = expression;
-    this.contents = contents;
-    this.location = location;
-  }
-}
-
-export class RootBloc extends Bloc {
+export interface RootBloc {
+  type: "RootBloc";
+  source: Maybe<string>;
   contents: Template;
-
-  constructor(contents: Template) {
-    super();
-    this.contents = contents;
-  }
+  properties?: Definition[];
 }
 
-export class Template {
-  children: (Bloc|string)[] = [];
-  params: Maybe<Identifier[]>;
-  locals: Dictionary<any> = {};
-  location: Location;
-
-  constructor (params: Maybe<Identifier[]>, location: Location) {
-    this.params = params;
-    this.location = copyLoc(location);
-  }
+export function RootBloc(source?: string): RootBloc {
+  return {
+    type: "RootBloc",
+    source,
+    contents: Template({ line: 1, char: 1 }),
+  };
 }
 
+export interface TemplateParam extends Location {
+  type: "local" | "global";
+  identifier: Identifier;
+}
+
+export interface Template extends Location {
+  params?: TemplateParam[];
+  children: (Bloc|string)[];
+  locals: Dictionary<any>;
+}
+
+export function Template(location: Location, params?: TemplateParam[], children?: (Bloc|string)[]): Template {
+  return {
+    line: location.line,
+    char: location.char,
+    params: params,
+    children: children || [],
+    locals: { }
+  };
+}
