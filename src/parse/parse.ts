@@ -111,7 +111,7 @@ export function parse(text: string, source?: string): ast.Template {
           let bloc = parseBlocExpression(opening, mods);
           let params = parseBlocParams(mods);
           if (! parseToken("]]")) {
-            throw new ParseError("Expected end of bloc (]])", curLoc);
+            throw new ParseError("Expected bloc terminator (]])", curLoc);
           }
           closed = true;
 
@@ -136,6 +136,7 @@ export function parse(text: string, source?: string): ast.Template {
   function parseBlocMods(): BlocMods {
     let blocMods = match(/#|\+:?|\*:?|-/y);
     if (blocMods) {
+      advance();
       switch (blocMods[0]) {
         case "#":  return { comment: true };
         case "+":  return { open: true };
@@ -196,26 +197,24 @@ export function parse(text: string, source?: string): ast.Template {
 
   /**
    */
-  function parseBlocParams(mods: BlocMods): Maybe<ast.TemplateParam[]> {
-    let token = parseToken("->") || parseToken("=>");
-    if (token) {
+  function parseBlocParams(mods: BlocMods): Maybe<ast.TemplateParamList> {
+    let arrow = parseToken("->") || parseToken("=>");
+    if (arrow) {
       if (!mods.open) {
-        throw new ParseError("Only opening blocs can have parameters", token);
+        throw new ParseError("Only opening blocs can have parameters", arrow);
       }
-      let params = parseSequence(parseIdentifier, "parameter name");
-      if (! params) {
+      let identifiers = parseSequence(parseIdentifier, "parameter name");
+      if (! identifiers) {
         throw new ParseError("Expected parameter list", curLoc);
       }
-      let type = token.text == "->" ? "local" : "global";
-      return params.map(identifier => {
-        return { type, identifier } as ast.TemplateParam
-      });
+      let type: "local" | "global" = arrow.text == "->" ? "local" : "global";
+      return ast.TemplateParamList(arrow, type, identifiers);
     }
   }
 
   /**
    */
-  function completeBloc(bloc: ast.Bloc, mods: BlocMods, params?: ast.TemplateParam[]) {
+  function completeBloc(bloc: ast.Bloc, mods: BlocMods, params?: ast.TemplateParamList) {
     // Only possibilities at this point are: open, open+implicit, close, and nothing
     if (mods.open) {
       // Add bloc to template
@@ -238,11 +237,14 @@ export function parse(text: string, source?: string): ast.Template {
 
   /**
    */
-  function completeDefinition(defn: ast.Definition, mods: BlocMods, params?: ast.TemplateParam[]) {
+  function completeDefinition(defn: ast.Definition, mods: BlocMods, params?: ast.TemplateParamList) {
     // Only possibilities at this point are: open, open+implicit, and nothing
 
     if (stack.bloc.type == "Definition") {
       throw new ParseError("Bloc property may not contain nested properties", defn);
+    }
+    if (stack.bloc.type == "RootBloc") {
+      throw new ParseError("Root bloc may not contain properties", defn);
     }
 
     // Add definition to current bloc

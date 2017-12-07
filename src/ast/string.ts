@@ -3,7 +3,7 @@ import { ExpressionVisitor, visit } from "./visit";
 import { Tree, flatten, Dictionary } from "../util";
 
 export function toString(e: expr.Expression): string {
-  return flatten(visit(toStringVisitor, this)).join("");
+  return flatten(visit(toStringVisitor, e)).join("");
 }
 
 var toStringVisitor: ExpressionVisitor<Tree<string>> = {

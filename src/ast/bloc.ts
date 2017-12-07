@@ -8,14 +8,15 @@ import { Maybe,
 export interface Definition extends Location {
   type: "Definition";
   target: Identifier;
-  expression: Maybe<Expression>;
+  expression?: Expression;
   contents?: Template;
 }
 
 export function Definition(
   location: Location,
   target: Identifier,
-  expression?: Expression
+  expression?: Expression,
+  contents?: Template
 ): Definition {
 
   return {
@@ -23,7 +24,8 @@ export function Definition(
     line: location.line,
     char: location.char,
     target,
-    expression
+    expression,
+    contents
   };
 }
 
@@ -65,18 +67,31 @@ export function RootBloc(source?: string): RootBloc {
   };
 }
 
-export interface TemplateParam extends Location {
+export interface TemplateParamList extends Location {
   type: "local" | "global";
-  identifier: Identifier;
+  identifiers: Identifier[];
+}
+
+export function TemplateParamList(
+  location: Location,
+  type: "local" | "global",
+  identifiers: Identifier[]
+): TemplateParamList {
+  return {
+    line: location.line,
+    char: location.char,
+    type,
+    identifiers
+  };
 }
 
 export interface Template extends Location {
-  params?: TemplateParam[];
+  params?: TemplateParamList;
   children: (Bloc|string)[];
   locals: Dictionary<any>;
 }
 
-export function Template(location: Location, params?: TemplateParam[], children?: (Bloc|string)[]): Template {
+export function Template(location: Location, params?: TemplateParamList, children?: (Bloc|string)[]): Template {
   return {
     line: location.line,
     char: location.char,
