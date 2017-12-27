@@ -138,6 +138,10 @@ export function eventuallyDefault<T, U>(v: Eventually<T>, w: U): Eventually<T|U>
 /**
  * Call a function once all arguments are ready.
  */
+export function eventuallyCall<T, U>(f: (u: U) => T, eu: Eventually<U>): Eventually<T>;
+export function eventuallyCall<T, U, V>(f: (u: U, v: V) => T, eu: Eventually<U>, ev: Eventually<V>): Eventually<T>;
+export function eventuallyCall<T, U, V, W>(f: (u: U, v: V, w: W) => T, eu: Eventually<U>, ev: Eventually<V>, ew: Eventually<W>): Eventually<T>;
+export function eventuallyCall<T, U, V, W, X>(f: (u: U, v: V, w: W, x: X) => T, eu: Eventually<U>, ev: Eventually<V>, ew: Eventually<W>, ex: Eventually<X>): Eventually<T>;
 export function eventuallyCall<T>(f: (...args: any[]) => T, ...args: any[]): Eventually<T> {
   let p = resolvePromises(args);
   if (isPromise(p)) {
@@ -155,6 +159,34 @@ export function eventuallyCall<T>(f: (...args: any[]) => T, ...args: any[]): Eve
  * Return value which will eventually be the structure with all promises
  * replaced with their values.
  */
+export function resolvePromises<T>(value: Eventually<T>[]): Eventually<T[]> {
+  let result: T[] = [ ];
+  let promises: PromiseLike<void>[] = [ ];
+
+  let assignTo = (key: number) => (val: T) => {
+    result[key] = val;
+  }
+
+  for (let i = 0, l = value.length; i < l; ++i) {
+    let t = value[i];
+    if (isPromise(t)) {
+      promises.push(t.then(assignTo(i)));
+    }
+    else {
+      result[i] = t;
+    }
+  }
+
+  if (promises.length) {
+    return Promise.all(promises).then(() => result);
+  }
+  else {
+    return result;
+  }
+}
+
+/**
+ *
 export function resolvePromises(value: any): Eventually<any> {
   var promises: PromiseLike<any>[] = [];
 
@@ -179,4 +211,29 @@ export function resolvePromises(value: any): Eventually<any> {
   else {
     return value;
   }
+}
+
+/**
+ */
+
+export function curry(f: Function, args?: any[]): Function {
+  if (! Array.isArray(args)) {
+    args = [];
+  }
+  let cf = function() {
+    let more = (args as any[]).concat(
+      Array.prototype.slice.call(arguments)
+    );
+    if (more.length >= f.length) {
+      return f.apply(this, more);
+    }
+    else {
+      return curry(f, more);
+    }
+  }
+  Object.defineProperties(cf, {
+    name: {configurable: true, value: args.length ? `${f.name}_${args.length}` : f.name},
+    length: {configurable: true, value: f.length - args.length}
+  });
+  return cf;
 }

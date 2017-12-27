@@ -6,36 +6,36 @@ describe("parse function", () => {
 
   describe("text and basic comments", () => {
 
-    it("should parse a single text block", () => {
-      let text = "this is a single [text] block";
+    it("should parse a single text bloc", () => {
+      let text = "this is a single [text] bloc";
       let result = parse(text);
       should(result).deepEqual(
         ast.Template({line: 1, char: 1}, undefined, [text])
       );
     })
 
-    it("should allow multi-line blocks", () => {
-      let text = "this is a\nmulti-line\n\ntext block\n";
+    it("should allow multi-line blocs", () => {
+      let text = "this is a\nmulti-line\n\ntext bloc\n";
       let result = parse(text);
       should(result).deepEqual(
         ast.Template({line: 1, char: 1}, undefined, [text])
       );
     })
 
-    it("should ignore comment blocks", () => {
-      let text = "there is [[# a\n#multi-line#\n comment #]] in [[#this#]] block\n";
+    it("should ignore comment blocs", () => {
+      let text = "there is [[# a\n#multi-line#\n comment #]] in [[#this#]] bloc\n";
       let result = parse(text);
       should(result).deepEqual(
         ast.Template({line: 1, char: 1}, undefined, [
           "there is ",
           " in ",
-          " block\n"
+          " bloc\n"
         ])
       )
     })
 
     it("should give an error on incomplete comments", () => {
-      let text = "this text has a [[# incomplete comment block ]]";
+      let text = "this text has a [[# incomplete comment bloc ]]";
       parse.bind(null, text, "fee.bloc").should.throw(ParseError, {
         fileName: "fee.bloc",
         lineNumber: 1,
@@ -44,7 +44,7 @@ describe("parse function", () => {
       })
     })
 
-    it("should throw on invalid blocks", () => {
+    it("should throw on invalid blocs", () => {
       let text = "big [[frickin}} whoops";
       parse.bind(null, text).should.throw(ParseError, {
         lineNumber: 1,
@@ -55,7 +55,7 @@ describe("parse function", () => {
   });
 
   describe("basic data", () => {
-    it("should parse a block with undefined", () => {
+    it("should parse a bloc with undefined", () => {
       let text = `[[undefined]]`;
       let result = parse(text);
       should(result).deepEqual(
@@ -65,7 +65,7 @@ describe("parse function", () => {
       );
     })
 
-    it("should parse a block with null", () => {
+    it("should parse a bloc with null", () => {
       let text = `[[null]]`;
       let result = parse(text);
       should(result).deepEqual(
@@ -75,7 +75,7 @@ describe("parse function", () => {
       );
     })
 
-    it("should parse a block with a boolean", () => {
+    it("should parse a bloc with a boolean", () => {
       for (let value of [true, false]) {
         let text = `[[${value}]]`;
         let result = parse(text);
@@ -87,7 +87,7 @@ describe("parse function", () => {
       }
     })
 
-    it("should parse a block with a number", () => {
+    it("should parse a bloc with a number", () => {
       for (let value of [0, 1, 3.14, 0.834, 123e123, 321e-321]) {
         let text = `[[${value}]]`;
         let result = parse(text);
@@ -99,7 +99,7 @@ describe("parse function", () => {
       }
     })
 
-    it("should parse a block with a string", () => {
+    it("should parse a bloc with a string", () => {
       for (let value of ["hello", "", "hello\t\\there\ngoodbye", "[[whoops]]"]) {
         let text = `[[${JSON.stringify(value)}]]`;
         let result = parse(text);
@@ -111,7 +111,7 @@ describe("parse function", () => {
       }
     })
 
-    it("should parse a block with an identifier", () => {
+    it("should parse a bloc with an identifier", () => {
       for (let value of ["x", "abc123", "hello_there", "_GoOdBye_37"]) {
         let text = `[[${value}]]`;
         let result = parse(text);
@@ -162,7 +162,7 @@ describe("parse function", () => {
       );
     })
 
-    it("should parse multiple blocks", () => {
+    it("should parse multiple blocs", () => {
       let text = 'Hello, [["Fred"]]!\n[[#\nwhatever\n#]]\nYou owe $[[3.5e2]].\n[[\ndone]]';
       let result = parse(text);
       should(result).deepEqual(
@@ -391,9 +391,9 @@ describe("parse function", () => {
     })
   });
 
-  describe("block templates", () => {
+  describe("bloc templates", () => {
 
-    it("should parse opening and closing blocks", () => {
+    it("should parse opening and closing blocs", () => {
       let text = "Hello [[+big]]bad[[-big]] world";
       let result = parse(text);
       should(result).deepEqual(ast.Template({line: 1, char: 1}, undefined, [
@@ -408,7 +408,7 @@ describe("parse function", () => {
       ]));
     })
 
-    it("should parse nested blocks", () => {
+    it("should parse nested blocs", () => {
       let text = "[[+one]][[+two]]hello[[-two]][[-one]]";
       let result = parse(text);
       should(result).deepEqual(ast.Template({line: 1, char: 1}, undefined, [
@@ -426,7 +426,7 @@ describe("parse function", () => {
       ]));
     })
 
-    it("should throw on missing closing block", () => {
+    it("should throw on missing closing bloc", () => {
       let text = "[[+one]][[+two]]hello[[-one]]";
       parse.bind(null, text).should.throw(ParseError, {
         lineNumber: 1,
@@ -441,7 +441,7 @@ describe("parse function", () => {
       });
     })
 
-    it("should parse an implicit closing block", () => {
+    it("should parse an implicit closing bloc", () => {
       let text = "[[+one]]abc[[*two]]def[[*three]]ghi[[-one]]jkl[[*four]]mno";
       let result = parse(text);
       should(result).deepEqual(ast.Template({line: 1, char: 1}, undefined, [

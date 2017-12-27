@@ -1,294 +1,237 @@
-import { parse } from "../exec/parse";
-import { render } from "../exec/render";
-import * as ast from "../ast";
-import { FunctionHelper } from "../exec/function";
-import should = require('should');
+import { template, templateResult } from "../render";
+import * as should from "should";
 
-describe('render function', () => {
+describe("render function", () => {
 
-  describe('basic blocks', () => {
+  describe("basic blocs", () => {
 
-    it('should render plain text', () => {
-      let text = 'Hello, world!';
-      let result = render(text);
-      should(result).be.a.String().equal('Hello, world!');
+    it ("should render plain text", () => {
+      let text = "this is a single [text] bloc";
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal(text);
+      });
     })
 
-    it('should render boolean literals', () => {
+    it("should render null", () => {
+      let text = "watch out for [[null]] pointers";
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal("watch out for  pointers");
+      });
+    });
+
+    it("should render undefined", () => {
+      let text = "this is not [[undefined]] behavior";
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal("this is not  behavior");
+      });
+    })
+
+    it("should render boolean literals", () => {
       let text = "How [[true]] it is!";
-      let result = render(text);
-      should(result).be.a.String().equal('How true it is!');
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal("How true it is!");
+      })
     })
 
-    it('should render number literals', () => {
-      let text = 'Pi = [[3.14159]]';
-      let final = render(text);
-      should(final).be.a.String().equal('Pi = 3.14159');
+    it("should render number literals", () => {
+      let text = "Pi = [[3.14159]]";
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal("Pi = 3.14159");
+      })
     })
 
-    it('should render string literals', () => {
+    it("should render string literals", () => {
       let text = 'Hello, [["world"]]!';
-      let result = render(text);
-      should(result).be.a.String().equal('Hello, world!');
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal("Hello, world!");
+      })
     })
 
-    it('should render identifiers', () => {
-      let text = 'Hello, [[name]]!';
-      let final = render(text, {name: 'Fred'});
-      should(final).be.a.String().equal('Hello, Fred!');
+    it("should render identifiers", () => {
+      let text = "Hello, [[name]]!";
+      return templateResult(text, { name: "Fred" }).then(result => {
+        should(result).be.a.String().equal("Hello, Fred!");
+      })
     })
 
-    it('should render multiple blocks', () => {
+    it("should render multiple blocs", () => {
       let text = '[[123]] [[x]] [["hello"]]';
-      let final = render(text, {x: '???'});
-      should(final).be.a.String().equal('123 ??? hello');
+      return templateResult(text, { x: "???" }).then(result => {
+        should(result).be.a.String().equal("123 ??? hello");
+      })
     })
-
-    it('should render undefined and null as empty string', () => {
-      let text = 'Hello, [[adj]] [[age]] year old [[name]]!';
-      let final = render(text, {age: 0, name: null});
-      should(final).be.a.String().equal('Hello,  0 year old !');
-    })
-
   })
 
-  describe('expressions', () => {
-
-    it('should evaluate operators', () => {
-      let text = '[[3 + 4 * 5]] and [[3 - 4 - 5 > 0 == 7 * 6 > 6 * 7]]';
-      let final = render(text);
-      should(final).be.a.String().equal('23 and true');
-    })
-
-    it('should evaluate properties', () => {
-      let text = 'Hello, [[user.stats.age]] year old [[user.name]]!';
-      let final = render(text, {user: {name: 'Fred', stats: {age: 50}}});
-      should(final).be.a.String().equal('Hello, 50 year old Fred!');
-    })
-
-    it('should evaluate array indexes', () => {
-      let text = 'Hello [[name[0]]], [[name[1]]], and [[name[2]]]!';
-      let final = render(text, {name: ['larry', 'curly', 'moe']});
-      should(final).be.a.String().equal('Hello larry, curly, and moe!');
-    })
-
-    it('should evaluate function calls', () => {
-      let text = '[[fee(3)]] and [[fie(fee(3))]]';
-      let final = render(text, {
-        fee: (x: number) => x + 1,
-        fie: (y: number) => y * 2
+  describe("expressions", () => {
+    it("should evaluate unary operators", () => {
+      let text = "[[ -3]] [[ -x]] [[!y]] [[ +5]]";
+      let context = { x: 8, y: false };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("-3 -8 true 5");
       })
-      should(final).be.a.String().equal('4 and 8');
     })
 
-    it('should evaluate extensions', () => {
-      let text = '[[o.x]] and [[o{y: 7}.y]]';
-      let final = render(text, {o: {x: 5}});
-      should(final).be.a.String().equal('5 and 7');
+    it("should evaluate binary operators", () => {
+      let text = "[[3 + 4 * 5]] and [[3 - 4 - 5 > 0 == 7 * 6 > 6 * 7]]";
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal("23 and true");
+      })
     })
 
+    it("should evaluate properties", () => {
+      let text = "Hello, [[user.stats.age]] year-old [[user.name]]";
+      let context = {
+        user: {
+          name: "Fred",
+          stats: { age: 50 }
+        }
+      };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("Hello, 50 year-old Fred");
+      })
+    })
+
+    it("should evalutate array indexes", () => {
+      let text = "Hello [[name[0]]], [[name[1]]], and [[name[2]]]";
+      let context = {
+        name: [ "larry", "curly", "moe" ]
+      };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("Hello larry, curly, and moe");
+      })
+    })
+
+    it("should evaluate function calls", () => {
+      let text = "[[f()]]+[[g(3, 4)]]";
+      let context = {
+        f: () => 6,
+        g: (x: number, y: number) => x + y
+      };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("6+7");
+      })
+    })
   })
 
-  describe('block templates', () => {
+  describe("handling undefined", () => {
 
-    it('should insert templates', () => {
-      let greeting = parse('Hello, world!');
-      let text = 'begin [[greeting]] end';
-      let final = render(text, {greeting});
-      should(final).be.a.String().equal('begin Hello, world! end');
+    it("should render undefined identifiers", () => {
+      let text = "Hello, [[name]]!";
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal("Hello, !");
+      });
     })
 
-    it('should insert inline templates', () => {
-      let text = `[[=greeting]]Hello, world![[-greeting]]begin [[greeting]] end`;
-      let final = render(text);
-      should(final).be.a.String().equal('begin Hello, world! end');
+    it("should render properties of undefined values", () => {
+      let text = "-[[undefined.foo]]-[[null.foo]]-[[goo.foo]]-[[fee.fie.foe.fum]]-";
+      return templateResult(text, { goo: { }, fee: { fie: { } } }).then(result => {
+        should(result).be.a.String().equal("-----");
+      });
     })
 
-    it('should supply context to inline templates', () => {
-      let text = `[[=greeting]]Hello, [[name]]![[-greeting]]begin [[greeting]] end`;
-      let final = render(text, {name: "Fred"});
-      should(final).be.a.String().equal('begin Hello, Fred! end');
-    })
-
-    it('should supply embeddedContents to templates', () => {
-      let text = `[[=greeting]]Hello, [[embeddedContents]]![[-greeting]]
-begin [[+greeting]]Jeff[[-greeting]] end`;
-      let final = render(text);
-      should(final).be.a.String().equal('\nbegin Hello, Jeff! end');
-    })
-
-    it('should accept explicit injection parameters', () => {
-      let text = `[[=greeting -> name]]Hello, [[name]]![[-greeting]]
-begin [[greeting {name: "Joe"}]] end`;
-      let final = render(text);
-      should(final).be.a.String().equal('\nbegin Hello, Joe! end');
-    })
-
-    it('should accept function-call injection parameters', () => {
-      let text = `[[=greeting -> name]]Hello, [[name]]![[-greeting]]
-begin [[greeting("Sue")]] end`;
-      let final = render(text);
-      should(final).be.a.String().equal('\nbegin Hello, Sue! end');
-    })
-
-    it('should accept block injection parameters', () => {
-      let text = `[[=greeting -> name]]Hello, [[name]]![[-greeting]]
-begin [[+greeting]][[name: "Bob"]][[-greeting]] end`;
-      let final = render(text);
-      should(final).be.a.String().equal('\nbegin Hello, Bob! end');
-    })
-
-    it('should take missing parameters from the context', () => {
-      let text = `[[=greeting -> name]]Hello, [[name]]![[-greeting]]
-begin [[greeting]] end`;
-      let final = render(text, {name: "Ann"});
-      should(final).be.a.String().equal('\nbegin Hello, Ann! end');
-    })
-
-    it('should override context variables with parameters', () => {
-      let text = `[[=greeting -> name]]Hello, [[name]]![[-greeting]]
-begin [[greeting("Jack")]] and [[name]]! end`;
-      let final = render(text, {name: "Jill"});
-      should(final).be.a.String().equal('\nbegin Hello, Jack! and Jill! end');
-    })
-
-    it('should accept parameters for thisContents', () => {
-      let text = `[[+thisContents("abc") -> bing]][[bing]][[-thisContents]]`
-      let final = render(text);
-      should(final).be.a.String().equal('abc');
-    })
-
-    it('should take nested parameter values over context values', () => {
-      let text = `[[=greeting -> name]][[=text]]Hello, [[name]]![[-text]]<h1>[[text]]</h1>[[-greeting]]
-begin [[greeting("Jack")]] and [[name]]! end`;
-      let final = render(text, {name: "Jill"});
-      should(final).be.a.String().equal('\nbegin <h1>Hello, Jack!</h1> and Jill! end');
-    })
-
-  })
-
-  describe('function helpers', () => {
-
-    it('should render function helpers', () => {
-      let text = 'begin [[foo]] end';
-      function foo() {
-        return `(${this.get("bip")})`;
-      }
-      let final = render(text, {foo: new FunctionHelper(foo),
-                                bip: "howdy"});
-      should(final).be.a.String().equal('begin (howdy) end');
-    })
-
-    it('should accept function helper arguments', () => {
-      let text = 'begin [[foo("doody")]] end';
-      function foo(bap: string) {
-        return `(${this.get("bip")} + ${bap})`;
-      }
-      let final = render(text, {foo: new FunctionHelper(foo, ['bap']),
-                                bip: "howdy"});
-      should(final).be.a.String().equal('begin (howdy + doody) end');
-    })
-
-    it('should accept function helper extensions', () => {
-      let text = 'begin [[foo{bap: "doody"}]] end';
-      function foo(bap: string) {
-        return `(${this.get("bip")} + ${bap})`;
-      }
-      let final = render(text, {foo: new FunctionHelper(foo, ['bap']),
-                                bip: "howdy"});
-      should(final).be.a.String().equal('begin (howdy + doody) end');
-    })
-
-    it('should accept function helper injections', () => {
-      let text = 'begin [[+foo]][[bap: "doody"]][[-foo]] end';
-      function foo(bap: string) {
-        return `(${this.get("bip")} + ${bap})`;
-      }
-      let final = render(text, {foo: new FunctionHelper(foo, ['bap']),
-                                bip: "howdy"});
-      should(final).be.a.String().equal('begin (howdy + doody) end');
-    })
-
-    describe('the let helper', () => {
-      it('should pass arguments to parameters', () => {
-        let text = `[[*let(3.14, "hello", 7) -> a, b, c]]\
-[[a]], [[b]], [[c + 1]]`;
-        let final = render(text);
-        should(final).be.a.String().equal('3.14, hello, 8');
+    it("should render indices of undefined values", () => {
+      let text = "=[[undefined[3]]]=[[null[2]]]=[[goo[2]]]=[[fee[1][2][3]]]=";
+      return templateResult(text, { goo: [ ], fee: [[ ], [ ]] }).then(result => {
+        should(result).be.a.String().equal("=====");
       })
     })
 
-    describe('the if helper', () => {
-      it('should render contents on true', () => {
-        let final = render(`([[+if(true)]]Yay![[-if]])`);
-        should(final).be.a.String().equal('(Yay!)');
-      })
-
-      it('should not render contents on false', () => {
-        let final = render(`([[+if(false)]]Boo![[-if]])`);
-        should(final).be.a.String().equal('()');
-      })
-
-      it('should render then on true', () => {
-        let text = `([[+if(foo)]][[:then]]Fee[[-then]][[:else]]Fie![[-else]][[-if]])`;
-        let final = render(text, {foo: true});
-        should(final).be.a.String().equal('(Fee)');
-      })
-
-      it('should render else on true', () => {
-        let text = `([[+if(foo)]][[:then]]Fee[[-then]][[:else]]Fie[[-else]][[-if]])`;
-        let final = render(text, {foo: false});
-        should(final).be.a.String().equal('(Fie)');
-      })
-
-    })
-
-    describe('the each helper', () => {
-      it ('should iterate over items in an array', () => {
-        let text = `[[+each(items) -> item]][[item]]\n[[-each]]`;
-        let final = render(text, {items: [3, "howdy", 12.5]});
-        should(final).be.a.String().equal('3\nhowdy\n12.5\n');
-      })
-      it ('should create private variable for loop variable', () => {
-        let text = `[[item = 77]][[item]]\n[[+each(items) -> item]][[item]]\n[[-each]][[item]]`;
-        let final = render(text, {items: [3, "howdy", 12.5]});
-        should(final).be.a.String().equal('77\n3\nhowdy\n12.5\n77');
-      })
-      it ('should provide loop index', () => {
-        let text = `[[+each(items) -> item, idx]]([[idx + 1]])[[item]]\n[[-each]]`;
-        let final = render(text, {items: [3, "howdy", 12.5]});
-        should(final).be.a.String().equal('(1)3\n(2)howdy\n(3)12.5\n');
-      })
-    })
-
-    describe('the include helper', () => {
-      it('should return fragment contents', () => {
-        let text = '[[*include("hello.blx") -> hello]][[hello]]';
-        let final = render(text);
-        return should(final).be.a.Promise().fulfilledWith('What up, world?');
-      })
-
-      it('should evaluate blocks in fragment', () => {
-        let text = '[[*include("if-else.blx") -> ifelse]][[ifelse]]'
-        let final = render(text);
-        return should(final).be.a.Promise().fulfilledWith('\n\n  Hello, world!\n\n');
+    it("should render applications of undefined values", () => {
+      let text = ".[[undefined()]].[[undefined(1, 2, 3)]].";
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal("...");
       })
     })
 
   })
 
-  describe('assignments', () => {
-    it('should render assignments', () => {
-      let text = '[[name = "Joe"]]Hello, [[name]]!';
-      let final = render(text);
-      should(final).be.a.String().equal('Hello, Joe!');
+  describe("helpers", () => {
+
+    it("should call helpers", () => {
+      let text = "[[fee]]";
+      let context = { fee: () => "Hello, world" };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("Hello, world");
+      })
     })
 
-    it('should render block assignments', () => {
-      let text = '[[=name]]Suzy[[-name]]Hello, [[name]]!';
-      let final = render(text);
-      should(final).be.a.String().equal('Hello, Suzy!');
+    it("should call helpers from curried functions", () => {
+      let text = "abc [[fee(3, 4)]] xyz";
+      let context = { fee: (x: number, y: number) => (() => x + y) };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("abc 7 xyz");
+      })
     })
-  });
+
+    it("should pass the context to helpers", () => {
+      let text = "[[fee]]";
+      let context = { fee: (ctx: any) => ctx.fum, fum: "Howdy" };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("Howdy");
+      })
+    })
+
+    it("should pass the bloc dictionary to helpers", () => {
+      let text = '[[+fee]][[fum: "Whatever"]][[-fee]]';
+      let context = { fee: (ctx: any, bloc: any) => bloc.fum };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("Whatever");
+      })
+    })
+
+    it("should render a template as a helper", () => {
+      let text = "[[fee]]";
+      let context = {
+        fee: template("abc [[3 + 4]] [[x]]"),
+        x: "Zippity doo dah"
+      };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("abc 7 Zippity doo dah");
+      })
+    })
+
+    it("should refer to bloc dictionary using this", () => {
+      let text = "[[+ 2 * this.pi * this.r]][[pi: 3.14159]][[r: 10]][[- 2 * this.pi * this.r]]";
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal(String(3.14159*20));
+      })
+    })
+
+    it("should refer to containing bloc properties as bloc", () => {
+      let text = '[[+fee]][[fum: "Hello, world!"]][[-fee]]';
+      let context = { fee: template("abc [[bloc.fum]] xyz") };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("abc Hello, world! xyz");
+      })
+    })
+
+  })
+
+  describe("nested templates", () => {
+    it("should store nested templates as contents", () => {
+      let text = "[[+fee]]Bing [[x]] bong[[-fee]]";
+      let context = {
+        fee: (ctx: any, bloc: any) => { return bloc.contents({ x: "bang" }, { }) }
+      };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("?");
+      })
+    })
+
+    it("should store nested templates as contents", () => {
+      let text = "[[+this.contents]]Hello [[x]][[-this.contents]]";
+      let context = { x: "world" };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("Hello world");
+      })
+    })
+
+    it("should allow templates to access bloc properties", () => {
+      let text = '[[+this.contents]][[name: "Joe"]]Hello, [[bloc.name]][[-this.contents]]';
+      return templateResult(text).then(result => {
+        should(result).be.a.String().equal("Hello, Joe");
+      })
+    })
+  })
 
 })

@@ -1,0 +1,1 @@
+export { render, template, templateResult } from "./render";

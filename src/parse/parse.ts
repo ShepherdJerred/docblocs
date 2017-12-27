@@ -338,16 +338,14 @@ export function parse(text: string, source?: string): ast.Template {
 
     let expr: Maybe<ast.Expression> =
       parseUndefined() || parseNull() || parseBoolean() || parseNumber() ||
-      parseString() || parseArrayConstruction() || parseObjectConstruction();
-    if (! expr) {
-      expr = parseIdentifier() || parseNested();
-      if (expr) {
-        let next: Maybe<ast.Expression>;
-        while (next = parseApplication(expr) ||
-                      parseIndex(expr) ||
-                      parseProperty(expr)      ) {
-          expr = next;
-        }
+      parseString() || parseArrayConstruction() || parseObjectConstruction() ||
+      parseIdentifier() || parseNested();
+    if (expr) {
+      let next: Maybe<ast.Expression>;
+      while (next = parseApplication(expr) ||
+                    parseIndex(expr) ||
+                    parseProperty(expr)      ) {
+        expr = next;
       }
     }
 
