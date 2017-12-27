@@ -211,18 +211,10 @@ describe("render function", () => {
     it("should store nested templates as contents", () => {
       let text = "[[+fee]]Bing [[x]] bong[[-fee]]";
       let context = {
-        fee: (ctx: any, bloc: any) => { return bloc.contents({ x: "bang" }, { }) }
+        fee: (ctx: any, bloc: any) => { return bloc.contents({ x: "bang" }) }
       };
       return templateResult(text, context).then(result => {
-        should(result).be.a.String().equal("?");
-      })
-    })
-
-    it("should store nested templates as contents", () => {
-      let text = "[[+this.contents]]Hello [[x]][[-this.contents]]";
-      let context = { x: "world" };
-      return templateResult(text, context).then(result => {
-        should(result).be.a.String().equal("Hello world");
+        should(result).be.a.String().equal("Bing bang bong");
       })
     })
 
@@ -230,6 +222,28 @@ describe("render function", () => {
       let text = '[[+this.contents]][[name: "Joe"]]Hello, [[bloc.name]][[-this.contents]]';
       return templateResult(text).then(result => {
         should(result).be.a.String().equal("Hello, Joe");
+      })
+    })
+
+    it("should allow templates to render bloc contents", () => {
+      let text = "[[+fee]]Hello, [[name]][[-fee]]";
+      let context = {
+        name: "Fred",
+        fee: template("<div>[[bloc.contents]]</div>")
+      };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("<div>Hello, Fred</div>");
+      })
+    })
+
+    it("should allow templates to render bloc properties", () => {
+      let text = "[[+fee]]abc[[*:fum]]xyz[[-fee]]";
+      let context = {
+        name: "Fred",
+        fee: template("[[bloc.contents]]/[[bloc.fum]]")
+      };
+      return templateResult(text, context).then(result => {
+        should(result).be.a.String().equal("abc/xyz");
       })
     })
   })

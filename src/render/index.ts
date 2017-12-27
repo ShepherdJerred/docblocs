@@ -1,1 +1,1 @@
-export { render, template, templateResult } from "./render";
+export { template, renderTemplate, templateResult } from "./render";

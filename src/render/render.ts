@@ -11,31 +11,7 @@ import { curry,
          eventuallyCall,
          resolvePromises } from "../util";
 
-export type Render_3 = {
-  (bloc: Dictionary<any>): Eventually<Tree<string>>;
-}
-
-export type Render_2 = {
-  (globals: Dictionary<any>): Render_3;
-  (globals: Dictionary<any>, bloc: Dictionary<any>): Eventually<Tree<string>>;
-}
-
-export type Render_1 = {
-  (locals: Dictionary<any>): Render_2;
-  (locals: Dictionary<any>, globals: Dictionary<any>): Render_3;
-  (locals: Dictionary<any>, globals: Dictionary<any>, bloc: Dictionary<any>): Eventually<Tree<string>>;
-}
-
-export type Render = {
-  (template: Template): Render_1;
-  (template: Template, locals: Dictionary<any>): Render_2;
-  (template: Template, locals: Dictionary<any>, globals: Dictionary<any>): Render_3;
-  (template: Template, locals: Dictionary<any>, globals: Dictionary<any>, bloc: Dictionary<any>): Eventually<Tree<string>>;
-}
-
-export const render = curry(renderTemplate) as Render;
-
-function renderTemplate(
+export function renderTemplate(
   template: Template,
   locals: Dictionary<any>,
   globals: Dictionary<any>,
@@ -58,7 +34,7 @@ function renderTemplate(
       blocLocals.bloc = bloc;
 
       if (child.contents) {
-        newBloc.contents = render(child.contents, blocLocals);
+        newBloc.contents = renderTemplate.bind(null, child.contents, blocLocals);
       }
 
       if (child.properties) {
@@ -67,7 +43,7 @@ function renderTemplate(
             newBloc[defn.target.text] = evaluate(defn.expression, blocLocals, blocGlobals);
           }
           else if (defn.contents) {
-            newBloc[defn.target.text] = render(defn.contents, blocLocals);
+            newBloc[defn.target.text] = renderTemplate.bind(null, defn.contents, blocLocals);
           }
         }
       }
@@ -79,9 +55,9 @@ function renderTemplate(
   return resolvePromises(results);
 }
 
-export function template(template: string | Template, source?: string): Render_2 {
+export function template(template: string | Template, source?: string) {
   let t = typeof template == "string" ? parse(template, source) : template;
-  return render(t, baseEnv);
+  return renderTemplate.bind(null, t, baseEnv);
 }
 
 export function templateResult(
@@ -113,7 +89,7 @@ export function templateResult(
   return new Promise((resolve, reject) => {
     try {
       let t = typeof template == "string" ? parse(template, source): template;
-      let r = render(t, baseEnv, globals, { });
+      let r = renderTemplate(t, baseEnv, globals, { });
       let x = eventuallyCall<string[], Tree<string>>(flatten, r);
       let s = eventuallyCall(x => x.join(''), x);
       eventuallyCall(resolve, s);
