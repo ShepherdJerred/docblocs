@@ -145,9 +145,11 @@ export function eventuallyCall<T, U, V, W, X>(f: (u: U, v: V, w: W, x: X) => T, 
 export function eventuallyCall<T>(f: (...args: any[]) => T, ...args: any[]): Eventually<T> {
   let p = resolvePromises(args);
   if (isPromise(p)) {
-    return p.then((resolvedArgs: any[]) => {
-      return f.apply(null, resolvedArgs);
-    })
+    return p.then(
+      (resolvedArgs: any[]) => {
+        return f.apply(null, resolvedArgs);
+      }
+    )
   }
   else {
     return f.apply(null, args);
@@ -159,7 +161,7 @@ export function eventuallyCall<T>(f: (...args: any[]) => T, ...args: any[]): Eve
  * Return value which will eventually be the structure with all promises
  * replaced with their values.
  */
-export function resolvePromises<T>(value: Eventually<T>[]): Eventually<T[]> {
+export function resolvePromises<T>(value: Eventually<T>[], catchReject?: boolean): Eventually<T[]> {
   let result: T[] = [ ];
   let promises: PromiseLike<void>[] = [ ];
 
@@ -170,7 +172,12 @@ export function resolvePromises<T>(value: Eventually<T>[]): Eventually<T[]> {
   for (let i = 0, l = value.length; i < l; ++i) {
     let t = value[i];
     if (isPromise(t)) {
-      promises.push(t.then(assignTo(i)));
+      if (catchReject) {
+        promises.push(t.then(assignTo(i), assignTo(i)));
+      }
+      else {
+        promises.push(t.then(assignTo(i)))
+      }
     }
     else {
       result[i] = t;

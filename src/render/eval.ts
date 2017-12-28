@@ -1,19 +1,20 @@
+import { constructResult } from "./construct";
 import * as ast from "../ast";
 import { ExpressionVisitor, visit } from "../ast/visit";
 import { Dictionary, eventuallyCall, resolvePromises } from "../util";
 
-export function evaluate(expr: ast.Expression, locals: Dictionary<any>, globals: Dictionary<any>): any {
-  let visitor = new EvalVisitor(locals, globals);
-  return visitor.evalHelper(visit(visitor, expr));
+export function evaluate(expr: ast.Expression, locals: Dictionary<any>, context: Dictionary<any>): any {
+  let visitor = new EvalVisitor(locals, context);
+  return eventuallyCall(visitor.evalHelper.bind(visitor), visit(visitor, expr));
 }
 
 class EvalVisitor implements ExpressionVisitor<any> {
   private locals: Dictionary<any>;
-  private globals: Dictionary<any>;
+  private context: Dictionary<any>;
 
-  constructor(locals: Dictionary<any>, globals: Dictionary<any>) {
+  constructor(locals: Dictionary<any>, context: Dictionary<any>) {
     this.locals = locals;
-    this.globals = globals;
+    this.context = context;
   }
 
   visitUndefined(u: ast.Undefined): undefined {
@@ -41,7 +42,7 @@ class EvalVisitor implements ExpressionVisitor<any> {
       return this.locals[i.text];
     }
     else {
-      return this.globals[i.text];
+      return this.context[i.text];
     }
   }
 
@@ -79,7 +80,7 @@ class EvalVisitor implements ExpressionVisitor<any> {
     return eventuallyCall(
       (fn: Function, args: any[]) => {
         if (typeof fn !== "function") {
-          return undefined;
+          throw new TypeError(ast.toString(a.fn) + " is not a function");
         }
         else {
           return fn.apply(null, args);
@@ -95,7 +96,7 @@ class EvalVisitor implements ExpressionVisitor<any> {
   }
 
   visitBinaryOperation(b: ast.BinaryOperation): any {
-    return binop[b.op](b.left, b.right, this);
+    return eventuallyCall(binop[b.op], b.left, b.right, this);
   }
 
   visitArrayConstruction(a: ast.ArrayConstruction): any[] {
@@ -111,37 +112,82 @@ class EvalVisitor implements ExpressionVisitor<any> {
   }
 
   evalHelper(helper: any): any {
+    let value: any;
     if (typeof helper == "function") {
-      return helper(this.globals, this.locals.this);
+      value = helper(this.context, this.locals.this);
     }
     else {
-      return helper;
+      value = helper;
     }
+    return eventuallyCall(constructResult, value);
   }
 
 }
 
 let unop : Dictionary<(right: ast.Expression, visitor: EvalVisitor) => any> = {
-  "+": (right, visitor) => + visit(visitor, right),
-  "-": (right, visitor) => - visit(visitor, right),
-  "!": (right, visitor) => ! visit(visitor, right),
+  "+": (right, visitor) =>
+    eventuallyCall(a => + a, visit(visitor, right)),
+
+  "-": (right, visitor) =>
+    eventuallyCall(a => - a, visit(visitor, right)),
+
+  "!": (right, visitor) =>
+    eventuallyCall(a => ! a, visit(visitor, right)),
 };
 
 let binop : Dictionary<(left: ast.Expression, right: ast.Expression, visitor: EvalVisitor) => any> = {
-  "+":  (left, right, visitor) => visit(visitor, left) +  visit(visitor, right),
-  "-":  (left, right, visitor) => visit(visitor, left) -  visit(visitor, right),
-  "*":  (left, right, visitor) => visit(visitor, left) *  visit(visitor, right),
-  "/":  (left, right, visitor) => visit(visitor, left) /  visit(visitor, right),
-  "%":  (left, right, visitor) => visit(visitor, left) %  visit(visitor, right),
-  "<":  (left, right, visitor) => visit(visitor, left) <  visit(visitor, right),
-  ">":  (left, right, visitor) => visit(visitor, left) >  visit(visitor, right),
-  "==": (left, right, visitor) => visit(visitor, left) == visit(visitor, right),
-  ">=": (left, right, visitor) => visit(visitor, left) >= visit(visitor, right),
-  "<=": (left, right, visitor) => visit(visitor, left) <= visit(visitor, right),
-  "!=": (left, right, visitor) => visit(visitor, left) != visit(visitor, right),
-  "&&": (left, right, visitor) => visit(visitor, left) && visit(visitor, right),
-  "||": (left, right, visitor) => visit(visitor, left) || visit(visitor, right),
+  "+":  (left, right, visitor) =>
+    eventuallyCall((a, b) => a + b, visit(visitor, left), visit(visitor, right)),
+
+  "-":  (left, right, visitor) =>
+    eventuallyCall((a, b) => a - b, visit(visitor, left), visit(visitor, right)),
+
+  "*":  (left, right, visitor) =>
+    eventuallyCall((a, b) => a * b, visit(visitor, left), visit(visitor, right)),
+
+  "/":  (left, right, visitor) =>
+    eventuallyCall((a, b) => a / b, visit(visitor, left),  visit(visitor, right)),
+
+  "%":  (left, right, visitor) =>
+    eventuallyCall((a, b) => a % b, visit(visitor, left),  visit(visitor, right)),
+
+  "<":  (left, right, visitor) =>
+    eventuallyCall((a, b) => a < b, visit(visitor, left),  visit(visitor, right)),
+
+  ">":  (left, right, visitor) =>
+    eventuallyCall((a, b) => a > b, visit(visitor, left),  visit(visitor, right)),
+
+  "==": (left, right, visitor) =>
+    eventuallyCall((a, b) => a == b, visit(visitor, left),  visit(visitor, right)),
+
+  ">=": (left, right, visitor) =>
+    eventuallyCall((a, b) => a >= b, visit(visitor, left),  visit(visitor, right)),
+
+  "<=": (left, right, visitor) =>
+    eventuallyCall((a, b) => a <= b, visit(visitor, left),  visit(visitor, right)),
+
+  "!=": (left, right, visitor) =>
+    eventuallyCall((a, b) => a != b, visit(visitor, left),  visit(visitor, right)),
+
+  "&&": (left, right, visitor) =>
+    eventuallyCall((a) => a && visit(visitor, right), visit(visitor, left)),
+
+  "||": (left, right, visitor) =>
+    eventuallyCall((a) => a || visit(visitor, right), visit(visitor, left)),
+
   "|":  (left, right, visitor) =>
-    visit(visitor, right).call(null, visitor.evalHelper(visit(visitor, left)))
+    eventuallyCall(f => {
+      if (typeof f == "function") {
+        return eventuallyCall(
+          f,
+          eventuallyCall(visitor.evalHelper.bind(visitor), visit(visitor, left))
+        )
+      }
+      else {
+        throw new TypeError(ast.toString(right) + " is not a function")
+      }
+    }, visit(visitor, right)
+  )
 };
 
+//  visit(visitor, right).call(null, visitor.evalHelper(visit(visitor, left)))

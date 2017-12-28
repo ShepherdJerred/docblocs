@@ -49,7 +49,7 @@ describe("parse function", () => {
       parse.bind(null, text).should.throw(ParseError, {
         lineNumber: 1,
         charNumber: "big [[frickin".length + 1,
-        message: "Expected bloc terminator (]])"
+        message: "Unexpected character in bloc"
       })
     })
   });

@@ -111,7 +111,7 @@ export function parse(text: string, source?: string): ast.Template {
           let bloc = parseBlocExpression(opening, mods);
           let params = parseBlocParams(mods);
           if (! parseToken("]]")) {
-            throw new ParseError("Expected bloc terminator (]])", curLoc);
+            throw new ParseError("Unexpected character in bloc", curLoc);
           }
           closed = true;
 
