@@ -5,7 +5,7 @@ import { Dictionary, eventuallyCall, resolvePromises } from "../util";
 
 export function evaluate(expr: ast.Expression, locals: Dictionary<any>, context: Dictionary<any>): any {
   let visitor = new EvalVisitor(locals, context);
-  return eventuallyCall(visitor.evalHelper.bind(visitor), visit(visitor, expr));
+  return eventuallyCall(visitor.evalHelper, visit(visitor, expr));
 }
 
 class EvalVisitor implements ExpressionVisitor<any> {
@@ -15,6 +15,7 @@ class EvalVisitor implements ExpressionVisitor<any> {
   constructor(locals: Dictionary<any>, context: Dictionary<any>) {
     this.locals = locals;
     this.context = context;
+    this.evalHelper = this.evalHelper.bind(this);
   }
 
   visitUndefined(u: ast.Undefined): undefined {
@@ -112,14 +113,12 @@ class EvalVisitor implements ExpressionVisitor<any> {
   }
 
   evalHelper(helper: any): any {
-    let value: any;
     if (typeof helper == "function") {
-      value = helper(this.context, this.locals.this);
+      return eventuallyCall(this.evalHelper, helper(this.context, this.locals.this));
     }
     else {
-      value = helper;
+      return eventuallyCall(constructResult, helper);
     }
-    return eventuallyCall(constructResult, value);
   }
 
 }
@@ -180,7 +179,7 @@ let binop : Dictionary<(left: ast.Expression, right: ast.Expression, visitor: Ev
       if (typeof f == "function") {
         return eventuallyCall(
           f,
-          eventuallyCall(visitor.evalHelper.bind(visitor), visit(visitor, left))
+          eventuallyCall(visitor.evalHelper, visit(visitor, left))
         )
       }
       else {

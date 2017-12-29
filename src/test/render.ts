@@ -538,6 +538,14 @@ global = 53`);
       })
     })
 
+    it("should use require to read template files", () => {
+      let text = '[[require("testrc/hello.bloc")]]';
+      let context = { name: "Suzy" };
+      return render(text, context).then(result => {
+        should(result).be.a.String().equal("Hello, Suzy!");
+      })
+    })
+
   })
 
 })
