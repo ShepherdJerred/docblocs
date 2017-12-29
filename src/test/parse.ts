@@ -2,7 +2,7 @@ import { parse, ParseError } from "../parse";
 import * as ast from "../ast";
 import should = require("should");
 
-describe("parse function", () => {
+describe("parsing", () => {
 
   describe("text and basic comments", () => {
 

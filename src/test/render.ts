@@ -1,15 +1,22 @@
 import { template, render, Helper } from "../render";
 import * as should from "should";
 
-describe("the render function", () => {
+describe("rendering", () => {
 
-  describe("rendering basic blocs", () => {
+  describe("basic blocs", () => {
 
-    it ("should render plain text", () => {
+    it ("should leave plain text alone", () => {
       let text = "this is a single [text] bloc";
       return render(text).then(result => {
         should(result).be.a.String().equal(text);
       });
+    })
+
+    it("should ignore comments", () => {
+      let text = "hello[[# abc\ndef #]]world";
+      return render(text).then(result => {
+        should(result).be.a.String().equal("helloworld");
+      })
     })
 
     it("should render null", () => {
@@ -62,7 +69,7 @@ describe("the render function", () => {
     })
   })
 
-  describe("rendering expressions", () => {
+  describe("expressions", () => {
     it("should evaluate unary operators", () => {
       let text = "[[ -3]] [[ -x]] [[!y]] [[ +5]]";
       let context = { x: 8, y: false };
@@ -156,9 +163,9 @@ true false false`);
     })
   })
 
-  describe("handling exceptions", () => {
+  describe("exceptions", () => {
 
-    it("should render exception messages", () => {
+    it("should yield exception messages", () => {
       let text = "[[fee()]]";
       let context = {
         fee: (x: any) => x.y
@@ -168,14 +175,14 @@ true false false`);
       })
     })
 
-    it("should render exceptions for bad function call", () => {
+    it("should yield message for bad function call", () => {
       let text = "[[fee()]]";
       return render(text, context).then(result => {
         should(result).be.a.String().equal("TypeError: fee is not a function");
       })
     })
 
-    it("should render custom exceptions", () => {
+    it("should yield custom exception messages", () => {
       let text = "[[fee]]";
       let context = {
         fee: () => { throw new Error("Whoops!") }
@@ -187,23 +194,23 @@ true false false`);
 
   })
 
-  describe("handling undefined", () => {
+  describe("undefined", () => {
 
-    it("should render undefined identifiers", () => {
+    it("should handle undefined identifiers", () => {
       let text = "Hello, [[name]]!";
       return render(text).then(result => {
         should(result).be.a.String().equal("Hello, !");
       });
     })
 
-    it("should render properties of undefined values", () => {
+    it("should handle properties of undefined values", () => {
       let text = "-[[undefined.foo]]-[[null.foo]]-[[goo.foo]]-[[fee.fie.foe.fum]]-";
       return render(text, { goo: { }, fee: { fie: { } } }).then(result => {
         should(result).be.a.String().equal("-----");
       });
     })
 
-    it("should render indices of undefined values", () => {
+    it("should handle indices of undefined values", () => {
       let text = "=[[undefined[3]]]=[[null[2]]]=[[goo[2]]]=[[fee[1][2][3]]]=";
       return render(text, { goo: [ ], fee: [[ ], [ ]] }).then(result => {
         should(result).be.a.String().equal("=====");
@@ -212,7 +219,7 @@ true false false`);
 
   })
 
-  describe("rendering helpers", () => {
+  describe("helpers", () => {
 
     it("should call helpers", () => {
       let text = "[[fee]]";
@@ -257,14 +264,14 @@ true false false`);
       })
     })
 
-    it("should refer to bloc dictionary using this", () => {
+    it("should allow blocs to refer to bloc dictionary using this", () => {
       let text = "[[+ 2 * this.pi * this.r]][[pi: 3.14159]][[r: 10]][[- 2 * this.pi * this.r]]";
       return render(text).then(result => {
         should(result).be.a.String().equal(String(3.14159*20));
       })
     })
 
-    it("should refer to containing bloc properties as bloc", () => {
+    it("should allow templates to refer to containing bloc properties as bloc", () => {
       let text = '[[+fee]][[fum: "Hello, world!"]][[-fee]]';
       let context = { fee: template("abc [[bloc.fum]] xyz") };
       return render(text, context).then(result => {
@@ -274,7 +281,8 @@ true false false`);
 
   })
 
-  describe("rendering nested templates", () => {
+  describe("nested templates", () => {
+
     it("should store nested templates as contents", () => {
       let text = "[[+fee]]Bing [[x]] bong[[-fee]]";
       let context = {
@@ -315,7 +323,7 @@ true false false`);
     })
   })
 
-  describe("rendering template parameters", () => {
+  describe("template parameters", () => {
 
     it("should pass arguments to local template parameters", () => {
       let text = '[[*this.contents("fee", "fie") -> x, y]][[x]]*[[y]]';
@@ -400,7 +408,7 @@ global = 53`);
 
   })
 
-  describe("handling promises", () => {
+  describe("promises", () => {
 
     it("should wait for expressions that result in promises", () => {
       let text = "abc [[fee]] xyz";
@@ -508,7 +516,7 @@ global = 53`);
 
   })
 
-  describe("rendering built-in locals", () => {
+  describe("built-in locals", () => {
 
     it("should use let to create local variables", () => {
       let text = '[[*let(3, "a", true) -> x, y, z]][[x]]/[[y]]/[[z]]';
