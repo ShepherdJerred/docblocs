@@ -506,12 +506,40 @@ describe("parsing", () => {
     })
 
     it("should not allow parameters on empty blocs", () => {
-      let text = '[[foo -> a, b, c]]';
+      let text = "[[foo -> a, b, c]]";
       parse.bind(null, text).should.throw(ParseError, {
         lineNumber: 1,
         charNumber: 7,
         message: "Only opening blocs can have parameters"
       })
+    })
+
+    it("should ignore lines with only opening blocs", () => {
+      let text = "abc\n  \n  [[+foo]]  \n  def[[-foo]]";
+      let result = parse(text);
+      should(result).deepEqual(ast.Template({line: 1, char: 1}, undefined, [
+        "abc\n  \n",
+        ast.Bloc({line: 3, char: 3},
+          ast.Identifier({line: 3, char: 6}, "foo"),
+          ast.Template({line: 4, char: 1}, undefined, [
+              "  def"
+          ])
+        )
+      ]))
+    })
+
+    it("should ignore lines with only closing blocs", () => {
+      let text = "[[+foo]]abc\n  \n  [[-foo]]  \n  def"
+      let result = parse(text);
+      should(result).deepEqual(ast.Template({line: 1, char: 1}, undefined, [
+        ast.Bloc({line: 1, char: 1},
+          ast.Identifier({line: 1, char: 4}, "foo"),
+          ast.Template({line: 1, char: 9}, undefined, [
+              "abc\n  \n"
+          ])
+        ),
+        "  def"
+      ]))
     })
 
   });
@@ -610,12 +638,30 @@ describe("parsing", () => {
     })
 
     it("should not allow properties inside properties", () => {
-      let text = '[[+foo]][[*:fie]]hello[[pi: 3.14]][[-foo]]';
+      let text = "[[+foo]][[*:fie]]hello[[pi: 3.14]][[-foo]]";
       parse.bind(null, text).should.throw(ParseError, {
         lineNumber: 1,
         charNumber: 23,
         message: "Bloc property may not contain nested properties"
       })
+    })
+
+    it("should ignore lines with only properties", () => {
+      let text = "[[+foo]]abc  \n  [[pi: 3.14]]  \n  def[[-foo]]";
+      let result = parse(text);
+      should(result).deepEqual(ast.Template({line: 1, char: 1}, undefined, [
+        ast.Bloc({line: 1, char: 1},
+          ast.Identifier({line: 1, char: 4}, "foo"),
+          ast.Template({line: 1, char: 9}, undefined, [
+            "abc  \n",
+            "  def"
+          ]),
+          [ ast.Definition({line: 2, char: 3},
+              ast.Identifier({line: 2, char: 5}, "pi"),
+              ast.Number({line: 2, char: 9}, 3.14)
+          ) ]
+        )
+      ]))
     })
 
   })

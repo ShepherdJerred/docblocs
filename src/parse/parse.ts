@@ -116,9 +116,13 @@ export function parse(text: string, source?: string): ast.Template {
           closed = true;
 
           if (bloc.type == "Bloc") {
+            if (mods.open || mods.close) {
+              removeBlankLine();
+            }
             completeBloc(bloc, mods, params);
           }
           else {
+            removeBlankLine();
             completeDefinition(bloc, mods, params);
           }
         }
@@ -631,6 +635,33 @@ export function parse(text: string, source?: string): ast.Template {
       curPos += len;
       return token;
     }
+  }
+
+  /**
+   */
+  function removeBlankLine() {
+    let leading: RegExpMatchArray | null = null;
+    let length = stack.bloc.contents.children.length;
+    if (length > 0) {
+      let last = stack.bloc.contents.children[length - 1];
+      if (typeof last !== "string") {
+        return;
+      }
+      leading = last.match(/^([^]*\n|)[ \t]*$/);
+      if (! leading) {
+        return;
+      }
+    }
+
+    let trailing = match(/[ \t]*(\n|$)/y);
+    if (! trailing) {
+      return;
+    }
+
+    if (leading) {
+      stack.bloc.contents.children[length - 1] = leading[1];
+    }
+    advance();
   }
 
   /**
