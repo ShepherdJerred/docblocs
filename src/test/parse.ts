@@ -505,6 +505,18 @@ describe("parsing", () => {
       ]));
     })
 
+    it("should parse param list for root bloc", () => {
+      let text = "[[*template -> x, y]]\nhello";
+      let result = parse(text);
+      should(result).deepEqual(ast.Template({line: 2, char: 1},
+        ast.TemplateParamList({line: 1, char: 13}, "local", [
+          ast.Identifier({line: 1, char: 16}, "x"),
+          ast.Identifier({line: 1, char: 19}, "y")
+        ]),
+        [ "hello" ]
+      ))
+    })
+
     it("should not allow parameters on empty blocs", () => {
       let text = "[[foo -> a, b, c]]";
       parse.bind(null, text).should.throw(ParseError, {

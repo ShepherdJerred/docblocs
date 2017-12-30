@@ -71,6 +71,16 @@ export function parse(text: string, source?: string): ast.Template {
 
     // Should be left with just one thing on the stack
     stack.pop(ast.Identifier(curLoc, rootId));
+    if (rootBloc.contents.children.length == 1) {
+      let child = rootBloc.contents.children[0];
+      if (typeof child != "string" &&
+          child.type == "Bloc" &&
+          child.expression.type == "Identifier" &&
+          child.expression.text == "template" &&
+          child.contents                          ) {
+        return child.contents;
+      }
+    }
     return rootBloc.contents;
 
   }
