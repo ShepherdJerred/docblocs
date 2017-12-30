@@ -1,7 +1,0 @@
-[[x = 5]]
-[[+if(x < 6)]]
-  Hello, world!
-[[:else]]
-  Goodbye, world!
-[[-else]]
-[[-if]]

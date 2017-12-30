@@ -43,6 +43,6 @@ export const baseEnv = {
           resolve(data.toString());
         }
       });
-    }).then(text => template(text));
+    }).then(text => template(text, name));
   }
 };
