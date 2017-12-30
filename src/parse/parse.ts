@@ -108,8 +108,16 @@ export function parse(text: string, source?: string): ast.Template {
           closed = true;
         }
         else {
-          let bloc = parseBlocExpression(opening, mods);
+          let bloc = parseBlocContents(opening, mods);
           let params = parseBlocParams(mods);
+          let firstExpr, firstParams;
+          if (mods.property && ! params) {
+            firstExpr = parseExpression();
+            if (firstExpr) {
+              firstParams = parseBlocParams(mods);
+            }
+          }
+
           if (! parseToken("]]")) {
             throw new ParseError("Unexpected character in bloc", curLoc);
           }
@@ -124,6 +132,13 @@ export function parse(text: string, source?: string): ast.Template {
           else {
             removeBlankLine();
             completeDefinition(bloc, mods, params);
+            if (firstExpr) {
+              completeBloc(
+                ast.Bloc(opening, firstExpr),
+                { open: true, implicit: true },
+                firstParams
+              )
+            }
           }
         }
       }
@@ -165,7 +180,7 @@ export function parse(text: string, source?: string): ast.Template {
 
   /**
    */
-  function parseBlocExpression(opening: Token, mods: BlocMods): ast.Bloc | ast.Definition {
+  function parseBlocContents(opening: Token, mods: BlocMods): ast.Bloc | ast.Definition {
     let expr = parseExpression();
     if (!expr) {
       throw new ParseError("Expected bloc expression", curLoc);

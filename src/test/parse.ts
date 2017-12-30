@@ -628,6 +628,34 @@ describe("parsing", () => {
       ]));
     })
 
+    it("should parse special else-if syntax", () => {
+      let text = `[[+fee]]mno[[*:a b -> c]]xyz[[-fee]]`
+      let result = parse(text);
+      should(result).deepEqual(ast.Template({line: 1, char: 1}, undefined, [
+        ast.Bloc({line: 1, char: 1},
+          ast.Identifier({line: 1, char: 4}, "fee"),
+          ast.Template({line: 1, char: 9}, undefined, [ "mno" ]),
+          [
+            ast.Definition({line: 1, char: 12},
+              ast.Identifier({line: 1, char: 16}, "a"),
+              undefined,
+              ast.Template({line: 1, char: 26}, undefined, [
+                ast.Bloc({line: 1, char: 12},
+                  ast.Identifier({line: 1, char: 18}, "b"),
+                  ast.Template({line: 1, char: 26},
+                    ast.TemplateParamList({line: 1, char: 20}, "local", [
+                      ast.Identifier({line: 1, char: 23}, "c")
+                    ]),
+                    [ "xyz" ]
+                  )
+                )
+              ])
+            )
+          ]
+        )
+      ]))
+    })
+
     it("should not allow properties in the root bloc", () => {
       let text = 'hello [[pi: 3.14]] there';
       parse.bind(null, text).should.throw(ParseError, {

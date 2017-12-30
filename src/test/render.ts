@@ -539,6 +539,28 @@ global = 53`);
       })
     })
 
+    it("should use special syntax for else-if", () => {
+      let tmpl = template(`[[+if (x == 3)]]abc
+[[*:else if (x == 4)]]def
+[[*:else if (x == 5)]]ghi
+[[*:else]]jkl
+[[-if]]`) as Helper;
+      return Promise.all([
+        render(tmpl, { x: 3 }).then(result => {
+          should(result).be.a.String().equal("abc\n");
+        }),
+        render(tmpl, { x: 4 }).then(result => {
+          should(result).be.a.String().equal("def\n");
+        }),
+        render(tmpl, { x: 5 }).then(result => {
+          should(result).be.a.String().equal("ghi\n");
+        }),
+        render(tmpl, { x: 6 }).then(result => {
+          should(result).be.a.String().equal("jkl\n");
+        }),
+      ]);
+    })
+
     it("should use eachof to iterate over a list", () => {
       let text = "[[+eachof(xs) -> x]]([[x]])[[-eachof]]";
       return render(text, { xs: ["a", "b", "c"] }).then(result => {
