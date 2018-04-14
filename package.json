@@ -29,6 +29,6 @@
     "should": "^9.0.2",
     "supertest": "^1.2.0",
     "typedoc": "^0.7.1",
-    "typescript": "^2.3.4"
+    "typescript": "2.3.4"
   }
 }
