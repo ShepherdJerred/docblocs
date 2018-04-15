@@ -1,7 +1,7 @@
 {
   "name": "@shepherdjerred/docblocs",
   "private": false,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "types": "lib/docblocks.d.ts",
   "description": "Document templating library",
   "scripts": {
@@ -10,7 +10,7 @@
     "test": "NODE_ENV=test mocha --reporter spec lib/test",
     "test-debug": "NODE_ENV=test mocha --reporter spec --inspect-brk lib/test",
     "typedoc": "typedoc --out doc/ --name DocBlocks --module commonjs --target ES6",
-    "install": "npm run compile"
+    "postinstall": "npm run compile"
   },
   "repository": {
     "type": "git",
