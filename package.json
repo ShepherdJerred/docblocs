@@ -8,7 +8,7 @@
     "compile": "tsc",
     "test": "NODE_ENV=test mocha --reporter spec lib/test",
     "test-debug": "NODE_ENV=test mocha --reporter spec --inspect-brk lib/test",
-    "typedoc": "typedoc --out doc/ --name DocBlocks --module commonjs --target ES6",
+    "typedoc": "typedoc --out doc/ --name DocBlocks --module commonjs --target ES6"
   },
   "repository": {
     "type": "git",
