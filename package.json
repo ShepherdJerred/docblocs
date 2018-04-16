@@ -1,6 +1,6 @@
 {
   "name": "@shepherdjerred/docblocs",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "types": "lib/docblocks.d.ts",
   "description": "Document templating library",
   "scripts": {
